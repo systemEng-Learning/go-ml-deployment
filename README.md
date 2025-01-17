@@ -203,3 +203,4 @@
 | VarianceThreshold | feature_selection | :white_check_mark: | :x: |
 | VotingClassifier | ensemble | :white_check_mark: | :x: |
 | VotingRegressor | ensemble | :white_check_mark: | :x: |
+| **Number Of Models** | **194** | **131** | **0** |

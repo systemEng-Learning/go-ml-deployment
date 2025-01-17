@@ -9,4 +9,4 @@
 ## Supported Models
 | Name | Package | Sklearn-onnx Supports | We Support |
 | ---- | ------- | --------------------- | ---------- |
-| ADBRegression | linear_model | [x] | [ ] |
+| ADBRegression | linear_model | - [x] | - [ ] |

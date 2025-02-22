@@ -1,0 +1,141 @@
+{
+  "node": [
+    {
+      "input": ["float_input"],
+      "output": ["label", "probability_tensor"],
+      "name": "LinearClassifier",
+      "op_type": "LinearClassifier",
+      "domain": "ai.onnx.ml",
+      "attribute": [
+        {
+          "name": "classlabels_ints",
+          "type": 7,
+          "ints": [0, 1, 2]
+        },
+        {
+          "name": "coefficients",
+          "type": 6,
+          "floats": [
+            -0.50130147, 0.8419699, -2.2627807, -0.96755445, 0.5673314,
+            -0.37099984, -0.17644618, -0.8879377, -0.06602986, -0.47097006,
+            2.4392269, 1.8554921
+          ]
+        },
+        {
+          "name": "intercepts",
+          "type": 6,
+          "floats": [9.628701, 1.8089765, -11.437677]
+        },
+        {
+          "name": "multi_class",
+          "type": 2,
+          "i": 1
+        },
+        {
+          "name": "post_transform",
+          "type": 3,
+          "s": "U09GVE1BWA=="
+        }
+      ]
+    },
+    {
+      "input": ["label"],
+      "output": ["output_label"],
+      "name": "Cast",
+      "op_type": "Cast",
+      "domain": "",
+      "attribute": [
+        {
+          "name": "to",
+          "type": 2,
+          "i": 7
+        }
+      ]
+    },
+    {
+      "input": ["probability_tensor"],
+      "output": ["probabilities"],
+      "name": "Normalizer",
+      "op_type": "Normalizer",
+      "domain": "ai.onnx.ml",
+      "attribute": [
+        {
+          "name": "norm",
+          "type": 3,
+          "s": "TDE="
+        }
+      ]
+    },
+    {
+      "input": ["probabilities"],
+      "output": ["output_probability"],
+      "name": "ZipMap",
+      "op_type": "ZipMap",
+      "domain": "ai.onnx.ml",
+      "attribute": [
+        {
+          "name": "classlabels_int64s",
+          "type": 7,
+          "ints": [0, 1, 2]
+        }
+      ]
+    }
+  ],
+  "name": "642edd7d45dd4af6bb3f9f06aa108e67",
+  "input": [
+    {
+      "name": "float_input",
+      "type": {
+        "Value": {
+          "TensorType": {
+            "elem_type": 1,
+            "shape": {
+              "dim": [
+                {
+                  "Value": null
+                },
+                {
+                  "Value": {
+                    "DimValue": 4
+                  }
+                }
+              ]
+            }
+          }
+        }
+      }
+    }
+  ],
+  "output": [
+    {
+      "name": "output_label",
+      "type": {
+        "Value": {
+          "TensorType": {
+            "elem_type": 7,
+            "shape": {
+              "dim": [
+                {
+                  "Value": null
+                }
+              ]
+            }
+          }
+        }
+      }
+    },
+    {
+      "name": "output_probability",
+      "type": {
+        "Value": {
+          "TensorType": {
+            "elem_type": 0,
+            "shape": {
+              "dim": null
+            }
+          }
+        }
+      }
+    }
+  ]
+}

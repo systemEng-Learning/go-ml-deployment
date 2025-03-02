@@ -1,0 +1,1325 @@
+{
+  "ir_version": 10,
+  "opset_import": [
+    {
+      "domain": "",
+      "version": 21
+    },
+    {
+      "domain": "ai.onnx.ml",
+      "version": 1
+    }
+  ],
+  "producer_name": "skl2onnx",
+  "producer_version": "1.18.0",
+  "domain": "ai.onnx",
+  "model_version": 0,
+  "doc_string": "",
+  "graph": {
+    "node": [
+      {
+        "input": [
+          "float_input",
+          "Sc_Scancst"
+        ],
+        "output": [
+          "UU000UU",
+          "UU001UU"
+        ],
+        "name": "Sc_Scan",
+        "op_type": "Scan",
+        "attribute": [
+          {
+            "name": "body",
+            "type": 5,
+            "g": {
+              "node": [
+                {
+                  "input": [
+                    "next_in"
+                  ],
+                  "output": [
+                    "next_out"
+                  ],
+                  "name": "cdistd_1_Identity",
+                  "op_type": "Identity",
+                  "domain": ""
+                },
+                {
+                  "input": [
+                    "next_in",
+                    "next"
+                  ],
+                  "output": [
+                    "cdistdf_1_C0"
+                  ],
+                  "name": "cdistdf_1_Sub",
+                  "op_type": "Sub",
+                  "domain": ""
+                },
+                {
+                  "input": [
+                    "cdistdf_1_C0",
+                    "cdistdf_1_ReduceSumSquarecst"
+                  ],
+                  "output": [
+                    "cdistdf_1_reduced0"
+                  ],
+                  "name": "cdistdf_1_ReduceSumSquare",
+                  "op_type": "ReduceSumSquare",
+                  "domain": "",
+                  "attribute": [
+                    {
+                      "name": "keepdims",
+                      "type": 2,
+                      "i": 0
+                    }
+                  ]
+                },
+                {
+                  "input": [
+                    "cdistdf_1_reduced0"
+                  ],
+                  "output": [
+                    "scan_out"
+                  ],
+                  "name": "cdistdf_1_Identity",
+                  "op_type": "Identity",
+                  "domain": ""
+                }
+              ],
+              "name": "OnnxIdentity",
+              "initializer": [
+                {
+                  "dims": [
+                    1
+                  ],
+                  "data_type": 7,
+                  "int64_data": [
+                    1
+                  ],
+                  "name": "cdistdf_1_ReduceSumSquarecst"
+                }
+              ],
+              "input": [
+                {
+                  "name": "next_in",
+                  "type": {
+                    "Value": {
+                      "TensorType": {
+                        "elem_type": 1,
+                        "shape": {
+                          "dim": [
+                            {
+                              "Value": null
+                            },
+                            {
+                              "Value": {
+                                "DimValue": 4
+                              }
+                            }
+                          ]
+                        }
+                      }
+                    }
+                  }
+                },
+                {
+                  "name": "next",
+                  "type": {
+                    "Value": {
+                      "TensorType": {
+                        "elem_type": 1,
+                        "shape": {
+                          "dim": [
+                            {
+                              "Value": null
+                            }
+                          ]
+                        }
+                      }
+                    }
+                  }
+                }
+              ],
+              "output": [
+                {
+                  "name": "next_out",
+                  "type": {
+                    "Value": {
+                      "TensorType": {
+                        "elem_type": 1,
+                        "shape": {
+                          "dim": [
+                            {
+                              "Value": null
+                            },
+                            {
+                              "Value": null
+                            }
+                          ]
+                        }
+                      }
+                    }
+                  }
+                },
+                {
+                  "name": "scan_out",
+                  "type": {
+                    "Value": {
+                      "TensorType": {
+                        "elem_type": 1,
+                        "shape": {
+                          "dim": [
+                            {
+                              "Value": null
+                            }
+                          ]
+                        }
+                      }
+                    }
+                  }
+                }
+              ]
+            }
+          },
+          {
+            "name": "num_scan_inputs",
+            "type": 2,
+            "i": 1
+          }
+        ]
+      },
+      {
+        "input": [
+          "UU001UU"
+        ],
+        "output": [
+          "Tr_transposed0"
+        ],
+        "name": "Tr_Transpose",
+        "op_type": "Transpose",
+        "domain": "",
+        "attribute": [
+          {
+            "name": "perm",
+            "type": 7,
+            "ints": [
+              1,
+              0
+            ]
+          }
+        ]
+      },
+      {
+        "input": [
+          "Tr_transposed0"
+        ],
+        "output": [
+          "Sq_Y0"
+        ],
+        "name": "Sq_Sqrt",
+        "op_type": "Sqrt",
+        "domain": ""
+      },
+      {
+        "input": [
+          "Sq_Y0",
+          "To_TopKcst"
+        ],
+        "output": [
+          "To_Values0",
+          "To_Indices1"
+        ],
+        "name": "To_TopK",
+        "op_type": "TopK",
+        "domain": "",
+        "attribute": [
+          {
+            "name": "largest",
+            "type": 2,
+            "i": 0
+          },
+          {
+            "name": "sorted",
+            "type": 2,
+            "i": 1
+          }
+        ]
+      },
+      {
+        "input": [
+          "To_Indices1"
+        ],
+        "output": [
+          "knny_output0"
+        ],
+        "name": "knny_Flatten",
+        "op_type": "Flatten",
+        "domain": ""
+      },
+      {
+        "input": [
+          "knny_ArrayFeatureExtractorcst",
+          "knny_output0"
+        ],
+        "output": [
+          "knny_Z0"
+        ],
+        "name": "knny_ArrayFeatureExtractor",
+        "op_type": "ArrayFeatureExtractor",
+        "domain": "ai.onnx.ml"
+      },
+      {
+        "input": [
+          "knny_Z0",
+          "knny_Reshapecst"
+        ],
+        "output": [
+          "knny_reshaped0"
+        ],
+        "name": "knny_Reshape",
+        "op_type": "Reshape",
+        "domain": "",
+        "attribute": [
+          {
+            "name": "allowzero",
+            "type": 2,
+            "i": 0
+          }
+        ]
+      },
+      {
+        "input": [
+          "knny_reshaped0",
+          "bprob_Equalcst"
+        ],
+        "output": [
+          "bprob_C0"
+        ],
+        "name": "bprob_Equal",
+        "op_type": "Equal",
+        "domain": ""
+      },
+      {
+        "input": [
+          "knny_reshaped0",
+          "bprob_ReduceSumcst"
+        ],
+        "output": [
+          "bprob_C02"
+        ],
+        "name": "bprob_Equal1",
+        "op_type": "Equal",
+        "domain": ""
+      },
+      {
+        "input": [
+          "knny_reshaped0",
+          "bprob_Equalcst2"
+        ],
+        "output": [
+          "bprob_C03"
+        ],
+        "name": "bprob_Equal2",
+        "op_type": "Equal",
+        "domain": ""
+      },
+      {
+        "input": [
+          "bprob_C0"
+        ],
+        "output": [
+          "bprob_output0"
+        ],
+        "name": "bprob_Cast",
+        "op_type": "Cast",
+        "domain": "",
+        "attribute": [
+          {
+            "name": "to",
+            "type": 2,
+            "i": 1
+          }
+        ]
+      },
+      {
+        "input": [
+          "bprob_C02"
+        ],
+        "output": [
+          "bprob_output02"
+        ],
+        "name": "bprob_Cast1",
+        "op_type": "Cast",
+        "domain": "",
+        "attribute": [
+          {
+            "name": "to",
+            "type": 2,
+            "i": 1
+          }
+        ]
+      },
+      {
+        "input": [
+          "bprob_C03"
+        ],
+        "output": [
+          "bprob_output03"
+        ],
+        "name": "bprob_Cast2",
+        "op_type": "Cast",
+        "domain": "",
+        "attribute": [
+          {
+            "name": "to",
+            "type": 2,
+            "i": 1
+          }
+        ]
+      },
+      {
+        "input": [
+          "bprob_output0",
+          "bprob_ReduceSumcst"
+        ],
+        "output": [
+          "bprob_reduced0"
+        ],
+        "name": "bprob_ReduceSum",
+        "op_type": "ReduceSum",
+        "domain": "",
+        "attribute": [
+          {
+            "name": "keepdims",
+            "type": 2,
+            "i": 1
+          }
+        ]
+      },
+      {
+        "input": [
+          "bprob_output02",
+          "bprob_ReduceSumcst"
+        ],
+        "output": [
+          "bprob_reduced01"
+        ],
+        "name": "bprob_ReduceSum1",
+        "op_type": "ReduceSum",
+        "domain": "",
+        "attribute": [
+          {
+            "name": "keepdims",
+            "type": 2,
+            "i": 1
+          }
+        ]
+      },
+      {
+        "input": [
+          "bprob_output03",
+          "bprob_ReduceSumcst"
+        ],
+        "output": [
+          "bprob_reduced02"
+        ],
+        "name": "bprob_ReduceSum2",
+        "op_type": "ReduceSum",
+        "domain": "",
+        "attribute": [
+          {
+            "name": "keepdims",
+            "type": 2,
+            "i": 1
+          }
+        ]
+      },
+      {
+        "input": [
+          "bprob_reduced0",
+          "bprob_reduced01",
+          "bprob_reduced02"
+        ],
+        "output": [
+          "bprob_concat_result0"
+        ],
+        "name": "bprob_Concat",
+        "op_type": "Concat",
+        "domain": "",
+        "attribute": [
+          {
+            "name": "axis",
+            "type": 2,
+            "i": 1
+          }
+        ]
+      },
+      {
+        "input": [
+          "bprob_concat_result0"
+        ],
+        "output": [
+          "blab_reduced0"
+        ],
+        "name": "blab_ArgMax",
+        "op_type": "ArgMax",
+        "domain": "",
+        "attribute": [
+          {
+            "name": "axis",
+            "type": 2,
+            "i": 1
+          },
+          {
+            "name": "keepdims",
+            "type": 2,
+            "i": 0
+          }
+        ]
+      },
+      {
+        "input": [
+          "bprob_concat_result0",
+          "bprob_ReduceSumcst"
+        ],
+        "output": [
+          "bprob_reduced04"
+        ],
+        "name": "bprob_ReduceSum3",
+        "op_type": "ReduceSum",
+        "domain": "",
+        "attribute": [
+          {
+            "name": "keepdims",
+            "type": 2,
+            "i": 1
+          }
+        ]
+      },
+      {
+        "input": [
+          "blab_ArrayFeatureExtractorcst",
+          "blab_reduced0"
+        ],
+        "output": [
+          "blab_Z0"
+        ],
+        "name": "blab_ArrayFeatureExtractor",
+        "op_type": "ArrayFeatureExtractor",
+        "domain": "ai.onnx.ml"
+      },
+      {
+        "input": [
+          "bprob_concat_result0",
+          "bprob_reduced04"
+        ],
+        "output": [
+          "probabilities"
+        ],
+        "name": "bprob_Div",
+        "op_type": "Div",
+        "domain": ""
+      },
+      {
+        "input": [
+          "blab_Z0"
+        ],
+        "output": [
+          "blab_output0"
+        ],
+        "name": "blab_Cast",
+        "op_type": "Cast",
+        "domain": "",
+        "attribute": [
+          {
+            "name": "to",
+            "type": 2,
+            "i": 7
+          }
+        ]
+      },
+      {
+        "input": [
+          "probabilities"
+        ],
+        "output": [
+          "output_probability"
+        ],
+        "name": "ZipMap",
+        "op_type": "ZipMap",
+        "domain": "ai.onnx.ml",
+        "attribute": [
+          {
+            "name": "classlabels_int64s",
+            "type": 7,
+            "ints": [
+              0,
+              1,
+              2
+            ]
+          }
+        ]
+      },
+      {
+        "input": [
+          "blab_output0",
+          "blab_Reshapecst"
+        ],
+        "output": [
+          "label"
+        ],
+        "name": "blab_Reshape",
+        "op_type": "Reshape",
+        "domain": "",
+        "attribute": [
+          {
+            "name": "allowzero",
+            "type": 2,
+            "i": 0
+          }
+        ]
+      },
+      {
+        "input": [
+          "label"
+        ],
+        "output": [
+          "output_label"
+        ],
+        "name": "Cast",
+        "op_type": "Cast",
+        "domain": "",
+        "attribute": [
+          {
+            "name": "to",
+            "type": 2,
+            "i": 7
+          }
+        ]
+      }
+    ],
+    "name": "6195b70345f848f7bce6216a9f983e3f",
+    "initializer": [
+      {
+        "dims": [
+          3
+        ],
+        "data_type": 7,
+        "int64_data": [
+          0,
+          1,
+          2
+        ],
+        "name": "blab_ArrayFeatureExtractorcst"
+      },
+      {
+        "dims": [
+          112
+        ],
+        "data_type": 7,
+        "int64_data": [
+          0,
+          0,
+          2,
+          1,
+          1,
+          0,
+          0,
+          1,
+          2,
+          2,
+          1,
+          2,
+          1,
+          2,
+          1,
+          0,
+          2,
+          1,
+          0,
+          0,
+          0,
+          1,
+          2,
+          0,
+          0,
+          0,
+          1,
+          0,
+          1,
+          2,
+          0,
+          1,
+          2,
+          0,
+          2,
+          2,
+          1,
+          1,
+          2,
+          1,
+          0,
+          1,
+          2,
+          0,
+          0,
+          1,
+          1,
+          0,
+          2,
+          0,
+          0,
+          1,
+          1,
+          2,
+          1,
+          2,
+          2,
+          1,
+          0,
+          0,
+          2,
+          2,
+          0,
+          0,
+          0,
+          1,
+          2,
+          0,
+          2,
+          2,
+          0,
+          1,
+          1,
+          2,
+          1,
+          2,
+          0,
+          2,
+          1,
+          2,
+          1,
+          1,
+          1,
+          0,
+          1,
+          1,
+          0,
+          1,
+          2,
+          2,
+          0,
+          1,
+          2,
+          2,
+          0,
+          2,
+          0,
+          1,
+          2,
+          2,
+          1,
+          2,
+          1,
+          1,
+          2,
+          2,
+          0,
+          1,
+          2,
+          0,
+          1,
+          2
+        ],
+        "name": "knny_ArrayFeatureExtractorcst"
+      },
+      {
+        "dims": [
+          112,
+          4
+        ],
+        "data_type": 1,
+        "float_data": [
+          5,
+          3.6,
+          1.4,
+          0.2,
+          5.2,
+          4.1,
+          1.5,
+          0.1,
+          5.8,
+          2.7,
+          5.1,
+          1.9,
+          6,
+          3.4,
+          4.5,
+          1.6,
+          6.7,
+          3.1,
+          4.7,
+          1.5,
+          5.4,
+          3.9,
+          1.3,
+          0.4,
+          5.4,
+          3.7,
+          1.5,
+          0.2,
+          5.5,
+          2.4,
+          3.7,
+          1,
+          6.3,
+          2.8,
+          5.1,
+          1.5,
+          6.4,
+          3.1,
+          5.5,
+          1.8,
+          6.6,
+          3,
+          4.4,
+          1.4,
+          7.2,
+          3.6,
+          6.1,
+          2.5,
+          5.7,
+          2.9,
+          4.2,
+          1.3,
+          7.6,
+          3,
+          6.6,
+          2.1,
+          5.6,
+          3,
+          4.5,
+          1.5,
+          5.1,
+          3.5,
+          1.4,
+          0.2,
+          7.7,
+          2.8,
+          6.7,
+          2,
+          5.8,
+          2.7,
+          4.1,
+          1,
+          5.2,
+          3.4,
+          1.4,
+          0.2,
+          5,
+          3.5,
+          1.3,
+          0.3,
+          5.1,
+          3.8,
+          1.9,
+          0.4,
+          5,
+          2,
+          3.5,
+          1,
+          6.3,
+          2.7,
+          4.9,
+          1.8,
+          4.8,
+          3.4,
+          1.9,
+          0.2,
+          5,
+          3,
+          1.6,
+          0.2,
+          5.1,
+          3.3,
+          1.7,
+          0.5,
+          5.6,
+          2.7,
+          4.2,
+          1.3,
+          5.1,
+          3.4,
+          1.5,
+          0.2,
+          5.7,
+          3,
+          4.2,
+          1.2,
+          7.7,
+          3.8,
+          6.7,
+          2.2,
+          4.6,
+          3.2,
+          1.4,
+          0.2,
+          6.2,
+          2.9,
+          4.3,
+          1.3,
+          5.7,
+          2.5,
+          5,
+          2,
+          5.5,
+          4.2,
+          1.4,
+          0.2,
+          6,
+          3,
+          4.8,
+          1.8,
+          5.8,
+          2.7,
+          5.1,
+          1.9,
+          6,
+          2.2,
+          4,
+          1,
+          5.4,
+          3,
+          4.5,
+          1.5,
+          6.2,
+          3.4,
+          5.4,
+          2.3,
+          5.5,
+          2.3,
+          4,
+          1.3,
+          5.4,
+          3.9,
+          1.7,
+          0.4,
+          5,
+          2.3,
+          3.3,
+          1,
+          6.4,
+          2.7,
+          5.3,
+          1.9,
+          5,
+          3.3,
+          1.4,
+          0.2,
+          5,
+          3.2,
+          1.2,
+          0.2,
+          5.5,
+          2.4,
+          3.8,
+          1.1,
+          6.7,
+          3,
+          5,
+          1.7,
+          4.9,
+          3.1,
+          1.5,
+          0.2,
+          5.8,
+          2.8,
+          5.1,
+          2.4,
+          5,
+          3.4,
+          1.5,
+          0.2,
+          5,
+          3.5,
+          1.6,
+          0.6,
+          5.9,
+          3.2,
+          4.8,
+          1.8,
+          5.1,
+          2.5,
+          3,
+          1.1,
+          6.9,
+          3.2,
+          5.7,
+          2.3,
+          6,
+          2.7,
+          5.1,
+          1.6,
+          6.1,
+          2.6,
+          5.6,
+          1.4,
+          7.7,
+          3,
+          6.1,
+          2.3,
+          5.5,
+          2.5,
+          4,
+          1.3,
+          4.4,
+          2.9,
+          1.4,
+          0.2,
+          4.3,
+          3,
+          1.1,
+          0.1,
+          6,
+          2.2,
+          5,
+          1.5,
+          7.2,
+          3.2,
+          6,
+          1.8,
+          4.6,
+          3.1,
+          1.5,
+          0.2,
+          5.1,
+          3.5,
+          1.4,
+          0.3,
+          4.4,
+          3,
+          1.3,
+          0.2,
+          6.3,
+          2.5,
+          4.9,
+          1.5,
+          6.3,
+          3.4,
+          5.6,
+          2.4,
+          4.6,
+          3.4,
+          1.4,
+          0.3,
+          6.8,
+          3,
+          5.5,
+          2.1,
+          6.3,
+          3.3,
+          6,
+          2.5,
+          4.7,
+          3.2,
+          1.3,
+          0.2,
+          6.1,
+          2.9,
+          4.7,
+          1.4,
+          6.5,
+          2.8,
+          4.6,
+          1.5,
+          6.2,
+          2.8,
+          4.8,
+          1.8,
+          7,
+          3.2,
+          4.7,
+          1.4,
+          6.4,
+          3.2,
+          5.3,
+          2.3,
+          5.1,
+          3.8,
+          1.6,
+          0.2,
+          6.9,
+          3.1,
+          5.4,
+          2.1,
+          5.9,
+          3,
+          4.2,
+          1.5,
+          6.5,
+          3,
+          5.2,
+          2,
+          5.7,
+          2.6,
+          3.5,
+          1,
+          5.2,
+          2.7,
+          3.9,
+          1.4,
+          6.1,
+          3,
+          4.6,
+          1.4,
+          4.5,
+          2.3,
+          1.3,
+          0.3,
+          6.6,
+          2.9,
+          4.6,
+          1.3,
+          5.5,
+          2.6,
+          4.4,
+          1.2,
+          5.3,
+          3.7,
+          1.5,
+          0.2,
+          5.6,
+          3,
+          4.1,
+          1.3,
+          7.3,
+          2.9,
+          6.3,
+          1.8,
+          6.7,
+          3.3,
+          5.7,
+          2.1,
+          5.1,
+          3.7,
+          1.5,
+          0.4,
+          4.9,
+          2.4,
+          3.3,
+          1,
+          6.7,
+          3.3,
+          5.7,
+          2.5,
+          7.2,
+          3,
+          5.8,
+          1.6,
+          4.9,
+          3.6,
+          1.4,
+          0.1,
+          6.7,
+          3.1,
+          5.6,
+          2.4,
+          4.9,
+          3,
+          1.4,
+          0.2,
+          6.9,
+          3.1,
+          4.9,
+          1.5,
+          7.4,
+          2.8,
+          6.1,
+          1.9,
+          6.3,
+          2.9,
+          5.6,
+          1.8,
+          5.7,
+          2.8,
+          4.1,
+          1.3,
+          6.5,
+          3,
+          5.5,
+          1.8,
+          6.3,
+          2.3,
+          4.4,
+          1.3,
+          6.4,
+          2.9,
+          4.3,
+          1.3,
+          5.6,
+          2.8,
+          4.9,
+          2,
+          5.9,
+          3,
+          5.1,
+          1.8,
+          5.4,
+          3.4,
+          1.7,
+          0.2,
+          6.1,
+          2.8,
+          4,
+          1.3,
+          4.9,
+          2.5,
+          4.5,
+          1.7,
+          5.8,
+          4,
+          1.2,
+          0.2,
+          5.8,
+          2.6,
+          4,
+          1.2,
+          7.1,
+          3,
+          5.9,
+          2.1
+        ],
+        "name": "Sc_Scancst"
+      },
+      {
+        "dims": [
+          1
+        ],
+        "data_type": 7,
+        "int64_data": [
+          5
+        ],
+        "name": "To_TopKcst"
+      },
+      {
+        "dims": [
+          2
+        ],
+        "data_type": 7,
+        "int64_data": [
+          -1,
+          5
+        ],
+        "name": "knny_Reshapecst"
+      },
+      {
+        "dims": [
+          1
+        ],
+        "data_type": 7,
+        "int64_data": [
+          0
+        ],
+        "name": "bprob_Equalcst"
+      },
+      {
+        "dims": [
+          1
+        ],
+        "data_type": 7,
+        "int64_data": [
+          1
+        ],
+        "name": "bprob_ReduceSumcst"
+      },
+      {
+        "dims": [
+          1
+        ],
+        "data_type": 7,
+        "int64_data": [
+          2
+        ],
+        "name": "bprob_Equalcst2"
+      },
+      {
+        "dims": [
+          1
+        ],
+        "data_type": 7,
+        "int64_data": [
+          -1
+        ],
+        "name": "blab_Reshapecst"
+      }
+    ],
+    "input": [
+      {
+        "name": "float_input",
+        "type": {
+          "Value": {
+            "TensorType": {
+              "elem_type": 1,
+              "shape": {
+                "dim": [
+                  {
+                    "Value": null
+                  },
+                  {
+                    "Value": {
+                      "DimValue": 4
+                    }
+                  }
+                ]
+              }
+            }
+          }
+        }
+      }
+    ],
+    "output": [
+      {
+        "name": "output_label",
+        "type": {
+          "Value": {
+            "TensorType": {
+              "elem_type": 7,
+              "shape": {
+                "dim": [
+                  {
+                    "Value": null
+                  }
+                ]
+              }
+            }
+          }
+        }
+      },
+      {
+        "name": "output_probability",
+        "type": {
+          "Value": {
+            "SequenceType": {
+              "elem_type": {
+                "Value": {
+                  "MapType": {
+                    "key_type": 7,
+                    "value_type": {
+                      "Value": {
+                        "TensorType": {
+                          "elem_type": 1
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    ]
+  }
+}

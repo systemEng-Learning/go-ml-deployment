@@ -1,0 +1,526 @@
+{
+  "ir_version": 10,
+  "opset_import": [
+    {
+      "domain": "",
+      "version": 9
+    },
+    {
+      "domain": "ai.onnx.ml",
+      "version": 1
+    }
+  ],
+  "producer_name": "skl2onnx",
+  "producer_version": "1.18.0",
+  "domain": "ai.onnx",
+  "model_version": 0,
+  "doc_string": "",
+  "graph": {
+    "node": [
+      {
+        "input": [
+          "float_input"
+        ],
+        "output": [
+          "label",
+          "probabilities"
+        ],
+        "name": "TreeEnsembleClassifier",
+        "op_type": "TreeEnsembleClassifier",
+        "domain": "ai.onnx.ml",
+        "attribute": [
+          {
+            "name": "class_ids",
+            "type": 7,
+            "ints": [
+              0,
+              1,
+              2,
+              0,
+              1,
+              2,
+              0,
+              1,
+              2,
+              0,
+              1,
+              2,
+              0,
+              1,
+              2,
+              0,
+              1,
+              2,
+              0,
+              1,
+              2,
+              0,
+              1,
+              2,
+              0,
+              1,
+              2,
+              0,
+              1,
+              2
+            ]
+          },
+          {
+            "name": "class_nodeids",
+            "type": 7,
+            "ints": [
+              1,
+              1,
+              1,
+              4,
+              4,
+              4,
+              5,
+              5,
+              5,
+              8,
+              8,
+              8,
+              10,
+              10,
+              10,
+              12,
+              12,
+              12,
+              13,
+              13,
+              13,
+              16,
+              16,
+              16,
+              17,
+              17,
+              17,
+              18,
+              18,
+              18
+            ]
+          },
+          {
+            "name": "class_treeids",
+            "type": 7,
+            "ints": [
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0
+            ]
+          },
+          {
+            "name": "class_weights",
+            "type": 6,
+            "floats": [
+              1,
+              0,
+              0,
+              0,
+              1,
+              0,
+              0,
+              0,
+              1,
+              0,
+              1,
+              0,
+              0,
+              0,
+              1,
+              0,
+              1,
+              0,
+              0,
+              0,
+              1,
+              0,
+              0,
+              1,
+              0,
+              1,
+              0,
+              0,
+              0,
+              1
+            ]
+          },
+          {
+            "name": "classlabels_int64s",
+            "type": 7,
+            "ints": [
+              0,
+              1,
+              2
+            ]
+          },
+          {
+            "name": "nodes_falsenodeids",
+            "type": 7,
+            "ints": [
+              2,
+              0,
+              6,
+              5,
+              0,
+              0,
+              14,
+              9,
+              0,
+              11,
+              0,
+              13,
+              0,
+              0,
+              18,
+              17,
+              0,
+              0,
+              0
+            ]
+          },
+          {
+            "name": "nodes_featureids",
+            "type": 7,
+            "ints": [
+              3,
+              0,
+              2,
+              3,
+              0,
+              0,
+              3,
+              2,
+              0,
+              3,
+              0,
+              2,
+              0,
+              0,
+              2,
+              1,
+              0,
+              0,
+              0
+            ]
+          },
+          {
+            "name": "nodes_hitrates",
+            "type": 6,
+            "floats": [
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1,
+              1
+            ]
+          },
+          {
+            "name": "nodes_missing_value_tracks_true",
+            "type": 7,
+            "ints": [
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0
+            ]
+          },
+          {
+            "name": "nodes_modes",
+            "type": 8,
+            "strings": [
+              "QlJBTkNIX0xFUQ==",
+              "TEVBRg==",
+              "QlJBTkNIX0xFUQ==",
+              "QlJBTkNIX0xFUQ==",
+              "TEVBRg==",
+              "TEVBRg==",
+              "QlJBTkNIX0xFUQ==",
+              "QlJBTkNIX0xFUQ==",
+              "TEVBRg==",
+              "QlJBTkNIX0xFUQ==",
+              "TEVBRg==",
+              "QlJBTkNIX0xFUQ==",
+              "TEVBRg==",
+              "TEVBRg==",
+              "QlJBTkNIX0xFUQ==",
+              "QlJBTkNIX0xFUQ==",
+              "TEVBRg==",
+              "TEVBRg==",
+              "TEVBRg=="
+            ]
+          },
+          {
+            "name": "nodes_nodeids",
+            "type": 7,
+            "ints": [
+              0,
+              1,
+              2,
+              3,
+              4,
+              5,
+              6,
+              7,
+              8,
+              9,
+              10,
+              11,
+              12,
+              13,
+              14,
+              15,
+              16,
+              17,
+              18
+            ]
+          },
+          {
+            "name": "nodes_treeids",
+            "type": 7,
+            "ints": [
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0,
+              0
+            ]
+          },
+          {
+            "name": "nodes_truenodeids",
+            "type": 7,
+            "ints": [
+              1,
+              0,
+              3,
+              4,
+              0,
+              0,
+              7,
+              8,
+              0,
+              10,
+              0,
+              12,
+              0,
+              0,
+              15,
+              16,
+              0,
+              0,
+              0
+            ]
+          },
+          {
+            "name": "nodes_values",
+            "type": 6,
+            "floats": [
+              0.8,
+              0,
+              4.75,
+              1.65,
+              0,
+              0,
+              1.75,
+              4.95,
+              0,
+              1.55,
+              0,
+              5.45,
+              0,
+              0,
+              4.85,
+              3.1,
+              0,
+              0,
+              0
+            ]
+          },
+          {
+            "name": "post_transform",
+            "type": 3,
+            "s": "Tk9ORQ=="
+          }
+        ]
+      },
+      {
+        "input": [
+          "label"
+        ],
+        "output": [
+          "output_label"
+        ],
+        "name": "Cast",
+        "op_type": "Cast",
+        "domain": "",
+        "attribute": [
+          {
+            "name": "to",
+            "type": 2,
+            "i": 7
+          }
+        ]
+      },
+      {
+        "input": [
+          "probabilities"
+        ],
+        "output": [
+          "output_probability"
+        ],
+        "name": "ZipMap",
+        "op_type": "ZipMap",
+        "domain": "ai.onnx.ml",
+        "attribute": [
+          {
+            "name": "classlabels_int64s",
+            "type": 7,
+            "ints": [
+              0,
+              1,
+              2
+            ]
+          }
+        ]
+      }
+    ],
+    "name": "1a7c5936f69a4c34b9cbc4fba33c4074",
+    "input": [
+      {
+        "name": "float_input",
+        "type": {
+          "Value": {
+            "TensorType": {
+              "elem_type": 1,
+              "shape": {
+                "dim": [
+                  {
+                    "Value": null
+                  },
+                  {
+                    "Value": {
+                      "DimValue": 4
+                    }
+                  }
+                ]
+              }
+            }
+          }
+        }
+      }
+    ],
+    "output": [
+      {
+        "name": "output_label",
+        "type": {
+          "Value": {
+            "TensorType": {
+              "elem_type": 7,
+              "shape": {
+                "dim": [
+                  {
+                    "Value": null
+                  }
+                ]
+              }
+            }
+          }
+        }
+      },
+      {
+        "name": "output_probability",
+        "type": {
+          "Value": {
+            "SequenceType": {
+              "elem_type": {
+                "Value": {
+                  "MapType": {
+                    "key_type": 7,
+                    "value_type": {
+                      "Value": {
+                        "TensorType": {
+                          "elem_type": 1
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    ]
+  }
+}

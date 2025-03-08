@@ -1,4 +1,4 @@
-package main
+package graph
 
 import (
 	"fmt"
@@ -8,23 +8,25 @@ import (
 )
 
 type LinearClassifier struct {
-	Input             string
+	input             int
 	classlabel        []int64
 	classlabel_string [][]byte
 	coefficients      []float32
 	intercepts        []float32
 	multiclass        bool
 	post_transform    string
-	outputs           []string
+	outputs           []int
 }
 
-func NewLinearClassifier(node *ir.NodeProto) (*LinearClassifier, error) {
-	l := &LinearClassifier{
-		Input:          node.Input[0],
-		multiclass:     false,
-		post_transform: "NONE",
-		outputs:        node.Output,
+func (l *LinearClassifier) Init(g *Graph, node *ir.NodeProto) error {
+	input, err := g.GetTensorIndex(node.Input[0])
+	if err != nil {
+		return err
 	}
+	l.input = input
+	l.multiclass = false
+	l.post_transform = "NONE"
+
 	for _, attr := range node.Attribute {
 		switch attr.Name {
 		case "classlabels_ints":
@@ -42,10 +44,15 @@ func NewLinearClassifier(node *ir.NodeProto) (*LinearClassifier, error) {
 		case "post_transform":
 			l.post_transform = string(attr.S)
 		default:
-			return nil, fmt.Errorf("%s not supported for %s", attr.Name, node.OpType)
+			return fmt.Errorf("%s not supported for %s", attr.Name, node.OpType)
 		}
 	}
-	return l, nil
+	l.outputs = make([]int, len(node.Output))
+
+	for i, output := range node.Output {
+		l.outputs[i] = g.RegisterTensor(output)
+	}
+	return nil
 }
 
 func (l *LinearClassifier) Compute(g *Graph) error {
@@ -128,18 +135,19 @@ func computeSoftmaxInplace(scores [][]float32) {
 }
 
 type Cast struct {
-	Input    string
-	output   string
+	input    int
+	output   int
 	to       int64
 	saturate bool
 }
 
-func NewCast(node *ir.NodeProto) (*Cast, error) {
-	c := &Cast{
-		Input:    node.Input[0],
-		saturate: true,
-		output:   node.Output[0],
+func (c *Cast) Init(g *Graph, node *ir.NodeProto) error {
+	input, err := g.GetTensorIndex(node.Input[0])
+	if err != nil {
+		return err
 	}
+	c.input = input
+	c.saturate = true
 	for _, attr := range node.Attribute {
 		switch attr.Name {
 		case "to":
@@ -149,10 +157,11 @@ func NewCast(node *ir.NodeProto) (*Cast, error) {
 				c.saturate = false
 			}
 		default:
-			return nil, fmt.Errorf("%s not supported for %s", attr.Name, node.OpType)
+			return fmt.Errorf("%s not supported for %s", attr.Name, node.OpType)
 		}
 	}
-	return c, nil
+	c.output = g.RegisterTensor(node.Output[0])
+	return nil
 }
 
 func (c *Cast) Compute(g *Graph) error {
@@ -165,25 +174,27 @@ func (c *Cast) Compute(g *Graph) error {
 }
 
 type Normalizer struct {
-	Input  string
-	output string
+	input  int
+	output int
 	norm   string
 }
 
-func NewNormalizer(node *ir.NodeProto) (*Normalizer, error) {
-	n := &Normalizer{
-		Input:  node.Input[0],
-		output: node.Output[0],
+func (n *Normalizer) Init(g *Graph, node *ir.NodeProto) error {
+	input, err := g.GetTensorIndex(node.Input[0])
+	if err != nil {
+		return err
 	}
+	n.input = input
 	for _, attr := range node.Attribute {
 		switch attr.Name {
 		case "norm":
 			n.norm = string(attr.S)
 		default:
-			return nil, fmt.Errorf("%s not supported for %s", attr.Name, node.OpType)
+			return fmt.Errorf("%s not supported for %s", attr.Name, node.OpType)
 		}
 	}
-	return n, nil
+	n.output = g.RegisterTensor(node.Output[0])
+	return nil
 }
 
 func (n *Normalizer) Compute(g *Graph) error {
@@ -206,17 +217,18 @@ func (n *Normalizer) Compute(g *Graph) error {
 }
 
 type ZipMap struct {
-	Input               string
+	input               int
 	classlabels_int64s  []int64
 	classlabels_strings [][]byte
-	output              string
+	output              int
 }
 
-func NewZipMap(node *ir.NodeProto) (*ZipMap, error) {
-	z := &ZipMap{
-		Input:  node.Input[0],
-		output: node.Output[0],
+func (z *ZipMap) Init(g *Graph, node *ir.NodeProto) error {
+	input, err := g.GetTensorIndex(node.Input[0])
+	if err != nil {
+		return err
 	}
+	z.input = input
 	for _, attr := range node.Attribute {
 		switch attr.Name {
 		case "classlabels_int64s":
@@ -224,10 +236,11 @@ func NewZipMap(node *ir.NodeProto) (*ZipMap, error) {
 		case "classlabels_strings":
 			z.classlabels_strings = attr.Strings
 		default:
-			return nil, fmt.Errorf("%s not supported for %s", attr.Name, node.OpType)
+			return fmt.Errorf("%s not supported for %s", attr.Name, node.OpType)
 		}
 	}
-	return z, nil
+	z.output = g.RegisterTensor(node.Output[0])
+	return nil
 }
 
 func (z *ZipMap) Compute(g *Graph) error {

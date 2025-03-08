@@ -5,25 +5,28 @@ import (
 	"strconv"
 
 	"github.com/systemEng-Learning/go-ml-deployment/ir"
+	"github.com/systemEng-Learning/go-ml-deployment/kernel"
+	"github.com/systemEng-Learning/go-ml-deployment/ops"
 	tensors "github.com/systemEng-Learning/go-ml-deployment/tensor"
 )
 
 type Ops interface {
-	Init(g *Graph, node *ir.NodeProto) error
-	Compute(g *Graph) error
+	Init(g *kernel.Kernel, node *ir.NodeProto) error
+	Compute(g *kernel.Kernel) error
 }
 
 type Graph struct {
-	graph     *ir.GraphProto
-	input     string
-	shape     []int
-	nodes     []Ops
-	tensors   []*tensors.Tensor
-	output    []int
-	tensorMap map[string]int // map of tensor name to index in tensors slice. Only used temporarily during setup
+	graph  *ir.GraphProto
+	input  string
+	shape  []int
+	nodes  []Ops
+	output []int
+	kernel *kernel.Kernel
 }
 
 func (g *Graph) Init() {
+	g.kernel = &kernel.Kernel{}
+	g.kernel.Init()
 	err := g.setInputsTensor()
 	if err != nil {
 		panic(err)
@@ -40,9 +43,7 @@ func (g *Graph) Init() {
 }
 
 func (g *Graph) setInputsTensor() error {
-	g.tensors = make([]*tensors.Tensor, 0)
-	g.tensorMap = make(map[string]int)
-	for i, input := range g.graph.Input {
+	for _, input := range g.graph.Input {
 		v := input.GetType().GetValue()
 		tensor := v.(*ir.TypeProto_TensorType)
 		shape, err := getShape(tensor.TensorType.Shape)
@@ -60,8 +61,7 @@ func (g *Graph) setInputsTensor() error {
 		if err != nil {
 			return err
 		}
-		g.tensors = append(g.tensors, inputTensor)
-		g.tensorMap[input.Name] = i
+		g.kernel.RegisterTensor(input.Name, inputTensor)
 	}
 	return nil
 }
@@ -97,20 +97,20 @@ func (g *Graph) initializeNodes() error {
 		o := node.OpType
 		switch o {
 		case "LinearClassifier":
-			l := &LinearClassifier{}
-			err = l.Init(g, node)
+			l := &ops.LinearClassifier{}
+			err = l.Init(g.kernel, node)
 			g.nodes = append(g.nodes, l)
 		case "Cast":
-			c := &Cast{}
-			err = c.Init(g, node)
+			c := &ops.Cast{}
+			err = c.Init(g.kernel, node)
 			g.nodes = append(g.nodes, c)
 		case "Normalizer":
-			n := &Normalizer{}
-			err = n.Init(g, node)
+			n := &ops.Normalizer{}
+			err = n.Init(g.kernel, node)
 			g.nodes = append(g.nodes, n)
 		case "ZipMap":
-			z := &ZipMap{}
-			err = z.Init(g, node)
+			z := &ops.ZipMap{}
+			err = z.Init(g.kernel, node)
 			g.nodes = append(g.nodes, z)
 		default:
 			return fmt.Errorf("%s operation not supported", node.OpType)
@@ -122,30 +122,12 @@ func (g *Graph) initializeNodes() error {
 	return nil
 }
 
-func (g *Graph) GetTensorIndex(name string) (int, error) {
-	index, ok := g.tensorMap[name]
-	if !ok {
-		return -1, fmt.Errorf("tensor with name %s does not exist")
-	}
-	return index, nil
-}
-
-func (g *Graph) RegisterTensor(name string) int {
-	index, ok := g.tensorMap[name]
-	if !ok {
-		g.tensors = append(g.tensors, nil)
-		index = len(g.tensors) - 1
-		g.tensorMap[name] = index
-	}
-	return index
-}
-
 func (g *Graph) setOutputIndices() error {
 	g.output = make([]int, len(g.graph.Output))
 	for i, o := range g.graph.Output {
-		index, ok := g.tensorMap[o.Name]
-		if !ok {
-			return fmt.Errorf("output index: this output does not exist")
+		index, err := g.kernel.GetTensorIndex(o.Name)
+		if err != nil {
+			return err
 		}
 		g.output[i] = index
 	}

@@ -1,10 +1,11 @@
-package graph
+package ops
 
 import (
 	"fmt"
 	"math"
 
 	"github.com/systemEng-Learning/go-ml-deployment/ir"
+	"github.com/systemEng-Learning/go-ml-deployment/kernel"
 )
 
 type LinearClassifier struct {
@@ -18,8 +19,8 @@ type LinearClassifier struct {
 	outputs           []int
 }
 
-func (l *LinearClassifier) Init(g *Graph, node *ir.NodeProto) error {
-	input, err := g.GetTensorIndex(node.Input[0])
+func (l *LinearClassifier) Init(k *kernel.Kernel, node *ir.NodeProto) error {
+	input, err := k.GetTensorIndex(node.Input[0])
 	if err != nil {
 		return err
 	}
@@ -50,12 +51,12 @@ func (l *LinearClassifier) Init(g *Graph, node *ir.NodeProto) error {
 	l.outputs = make([]int, len(node.Output))
 
 	for i, output := range node.Output {
-		l.outputs[i] = g.RegisterTensor(output)
+		l.outputs[i] = k.RegisterTensor(output, nil)
 	}
 	return nil
 }
 
-func (l *LinearClassifier) Compute(g *Graph) error {
+func (l *LinearClassifier) Compute(k *kernel.Kernel) error {
 	if len(g.shape) != 2 {
 		return fmt.Errorf("linearclassifier: invalid shape %v", g.shape)
 	}
@@ -141,8 +142,8 @@ type Cast struct {
 	saturate bool
 }
 
-func (c *Cast) Init(g *Graph, node *ir.NodeProto) error {
-	input, err := g.GetTensorIndex(node.Input[0])
+func (c *Cast) Init(k *kernel.Kernel, node *ir.NodeProto) error {
+	input, err := k.GetTensorIndex(node.Input[0])
 	if err != nil {
 		return err
 	}
@@ -160,11 +161,11 @@ func (c *Cast) Init(g *Graph, node *ir.NodeProto) error {
 			return fmt.Errorf("%s not supported for %s", attr.Name, node.OpType)
 		}
 	}
-	c.output = g.RegisterTensor(node.Output[0])
+	c.output = k.RegisterTensor(node.Output[0], nil)
 	return nil
 }
 
-func (c *Cast) Compute(g *Graph) error {
+func (c *Cast) Compute(k *kernel.Kernel) error {
 	t := g.tensors[c.Input]
 	if t.I != nil {
 		g.tensors[c.output] = t
@@ -179,8 +180,8 @@ type Normalizer struct {
 	norm   string
 }
 
-func (n *Normalizer) Init(g *Graph, node *ir.NodeProto) error {
-	input, err := g.GetTensorIndex(node.Input[0])
+func (n *Normalizer) Init(k *kernel.Kernel, node *ir.NodeProto) error {
+	input, err := k.GetTensorIndex(node.Input[0])
 	if err != nil {
 		return err
 	}
@@ -193,11 +194,11 @@ func (n *Normalizer) Init(g *Graph, node *ir.NodeProto) error {
 			return fmt.Errorf("%s not supported for %s", attr.Name, node.OpType)
 		}
 	}
-	n.output = g.RegisterTensor(node.Output[0])
+	n.output = k.RegisterTensor(node.Output[0], nil)
 	return nil
 }
 
-func (n *Normalizer) Compute(g *Graph) error {
+func (n *Normalizer) Compute(g *kernel.Kernel) error {
 	t := g.tensors[n.Input]
 	scores := t.Floats
 	var sum float32
@@ -220,30 +221,39 @@ type ZipMap struct {
 	input               int
 	classlabels_int64s  []int64
 	classlabels_strings [][]byte
+	array_like          bool
 	output              int
 }
 
-func (z *ZipMap) Init(g *Graph, node *ir.NodeProto) error {
-	input, err := g.GetTensorIndex(node.Input[0])
+func (z *ZipMap) Init(k *kernel.Kernel, node *ir.NodeProto) error {
+	input, err := k.GetTensorIndex(node.Input[0])
 	if err != nil {
 		return err
 	}
 	z.input = input
+	z.array_like = false
 	for _, attr := range node.Attribute {
 		switch attr.Name {
 		case "classlabels_int64s":
 			z.classlabels_int64s = attr.Ints
+			array_like := true
+			for i := range attr.Ints {
+				if int64(i) != attr.Ints[i] {
+					array_like = false
+				}
+			}
+			z.array_like = array_like
 		case "classlabels_strings":
 			z.classlabels_strings = attr.Strings
 		default:
 			return fmt.Errorf("%s not supported for %s", attr.Name, node.OpType)
 		}
 	}
-	z.output = g.RegisterTensor(node.Output[0])
+	z.output = k.RegisterTensor(node.Output[0], nil)
 	return nil
 }
 
-func (z *ZipMap) Compute(g *Graph) error {
+func (z *ZipMap) Compute(k *kernel.Kernel) error {
 	t := g.tensors[z.Input]
 	scores := t.Floats
 	result := make([]map[int]float32, len(scores))

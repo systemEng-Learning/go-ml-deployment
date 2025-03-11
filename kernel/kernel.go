@@ -72,16 +72,18 @@ func (k *Kernel) Input(index int) (Data, error) {
 }
 
 /*
- * Output retrieves or initializes a tensor at the given index in the Kernel.
- *
- * - If the index is out of range, an error is returned.
- * - If the tensor at the specified index is `nil`, a new tensor is created with the given shape and data type.
- * - If a tensor already exists:
- *   - If the data type has changed, the tensor is cleared and updated.
- *   - If the existing tensor’s capacity is insufficient, memory is reallocated.
- *
- * This function ensures that a valid tensor is always returned for the given index.
- */
+* Output retrieves or initializes a tensor at the given index in the Kernel.
+*
+  - - If the index is out of range, an error is returned.
+  - - If the tensor at the specified index is `nil`, a new tensor is created with the given shape and data type.
+  - - If a tensor already exists:
+  - - If the data type has changed and it's not related i.e float & double, int32 & int64,
+    the tensor is cleared and updated.
+  - - If the existing tensor’s capacity is insufficient, memory is reallocated.
+
+*
+* This function ensures that a valid tensor is always returned for the given index.
+*/
 func (k *Kernel) Output(index int, shape []int, dtype tensors.DataType) (*tensors.Tensor, error) {
 	if index >= len(k.tensors) {
 		return nil, fmt.Errorf("tensor with index %d does not exist", index)

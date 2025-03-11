@@ -2,6 +2,7 @@ package graph
 
 import (
 	"fmt"
+	"slices"
 	"strconv"
 
 	"github.com/systemEng-Learning/go-ml-deployment/ir"
@@ -17,14 +18,16 @@ type Ops interface {
 
 type Graph struct {
 	graph  *ir.GraphProto
-	input  string
-	shape  []int
+	inputs []int
+	shapes [][]int
+	dtypes []tensors.DataType
 	nodes  []Ops
 	output []int
 	kernel *kernel.Kernel
 }
 
-func (g *Graph) Init() {
+func (g *Graph) Init(graphProto *ir.GraphProto) {
+	g.graph = graphProto
 	g.kernel = &kernel.Kernel{}
 	g.kernel.Init()
 	err := g.setInputsTensor()
@@ -39,11 +42,13 @@ func (g *Graph) Init() {
 	if err != nil {
 		panic(err)
 	}
-	fmt.Printf("%+v\n", g.nodes)
 }
 
 func (g *Graph) setInputsTensor() error {
-	for _, input := range g.graph.Input {
+	g.inputs = make([]int, len(g.graph.Input))
+	g.shapes = make([][]int, len(g.graph.Input))
+	g.dtypes = make([]tensors.DataType, len(g.graph.Input))
+	for i, input := range g.graph.Input {
 		v := input.GetType().GetValue()
 		tensor := v.(*ir.TypeProto_TensorType)
 		shape, err := getShape(tensor.TensorType.Shape)
@@ -56,12 +61,11 @@ func (g *Graph) setInputsTensor() error {
 		} else if len(shape) > 2 {
 			return fmt.Errorf("graph setinputtensor: want inputs of at most 2 dimensions, got %d", len(shape))
 		}
-		dtype := tensors.OnnxTypeToDtype(ir.TensorProto_DataType_name[tensor.TensorType.ElemType])
-		inputTensor, err := tensors.CreateTensor(shape, dtype)
-		if err != nil {
-			return err
-		}
-		g.kernel.RegisterTensor(input.Name, inputTensor)
+		dtype := tensors.OnnxTypeToDtype(tensor.TensorType.ElemType)
+		index := g.kernel.RegisterTensor(input.Name)
+		g.inputs[i] = index
+		g.shapes[i] = shape
+		g.dtypes[i] = dtype
 	}
 	return nil
 }
@@ -84,7 +88,7 @@ func getShape(shape *ir.TensorShapeProto) ([]int, error) {
 		case *ir.TensorShapeProto_Dimension_DimValue:
 			result[i] = int(t.DimValue)
 		default:
-			result[i] = 1
+			result[i] = -1
 		}
 	}
 	return result, nil
@@ -134,35 +138,163 @@ func (g *Graph) setOutputIndices() error {
 	return nil
 }
 
-func (g *Graph) Execute(input [][]float32) {
-	t := Tensor{Floats: input}
-	g.tensors = make(map[string]*Tensor)
-	g.tensors[g.input] = &t
-	op, ok := g.nodes[g.input]
-	if !ok {
-		panic("Nope")
+func (g *Graph) setupFor1DFloat32Input(index int, data []float32) error {
+	shape := slices.Clone(g.shapes[index])
+	if len(shape) == 1 && shape[0] == -1 {
+		shape[0] = len(data)
+	} else if len(shape) == 1 && len(data)%shape[0] != 0 {
+		return fmt.Errorf("data of length %d cannot fit expected input of length %d", len(data), shape[0])
+	} else if len(shape) == 2 &&
+		((shape[0] == -1 && len(data)%shape[1] != 0) || (shape[0] > -1 && len(data) != shape[0]*shape[1])) {
+		return fmt.Errorf("data of length %d cannnot fit expected input of shape %v", len(data), shape)
+	} else if len(shape) == 2 && shape[0] == -1 {
+		shape[0] = len(data) / shape[1]
 	}
-	err := op.Compute(g)
-	if err != nil {
-		panic(err)
-	}
-}
-
-func (g *Graph) ComputeNext(key string) error {
-	op, ok := g.nodes[key]
-	if !ok {
-		return nil
-	}
-	err := op.Compute(g)
-
+	tensor, err := g.kernel.Output(g.inputs[index], shape, g.dtypes[index])
 	if err != nil {
 		return err
+	}
+	if tensor.DType == tensors.Double {
+		for i := range data {
+			tensor.DoubleData[i] = float64(data[i])
+		}
+	} else {
+		copy(tensor.FloatData, data)
 	}
 	return nil
 }
 
-func (g *Graph) PrintOutput() {
-	for _, t := range g.tensors {
-		fmt.Println(g.tensors[o.Name])
+func (g *Graph) setupFor2DFloat32Input(index int, data [][]float32) error {
+	shape := slices.Clone(g.shapes[index])
+	m := len(data)
+	n := len(data[0])
+	if len(shape) == 1 {
+		return fmt.Errorf("input should be 1D, got 2D")
+	}
+	if shape[0] == -1 && n == shape[1] {
+		shape[0] = m
+	} else if n != shape[1] || (shape[0] > -1 && shape[0] != m) {
+		return fmt.Errorf("expected input of shape %v, got [%d, %d]", shape, m, n)
+	}
+	tensor, err := g.kernel.Output(g.inputs[index], shape, g.dtypes[index])
+	if err != nil {
+		return err
+	}
+	if tensor.DType == tensors.Double {
+		for x := range m {
+			for y := range n {
+				tensor.DoubleData[x*n+y] = float64(data[x][y])
+			}
+		}
+	} else {
+		for x := range m {
+			for y := range n {
+				tensor.FloatData[x*n+y] = data[x][y]
+			}
+		}
+	}
+	return nil
+}
+
+func (g *Graph) Execute1DFloat32(input []float32) error {
+	length := len(g.inputs)
+	if length > 1 && length != len(input) {
+		return fmt.Errorf("args count not equal, got %d, wanted %d", len(input), length)
+	}
+	for i := range g.inputs {
+		if g.dtypes[i] != tensors.Float && g.dtypes[i] != tensors.Double {
+			return fmt.Errorf("expected float or double inputs, got %d", g.dtypes[i])
+		}
+		var expectedLen = g.shapes[i][0]
+		if len(g.shapes[i]) == 2 {
+			expectedLen *= g.shapes[i][1]
+		}
+		if expectedLen < 0 {
+			expectedLen *= -1
+		}
+		if length > 1 && expectedLen > 1 {
+			return fmt.Errorf("input %d expects %d samples but it will get only a single sample", i, expectedLen)
+		}
+		if length > 1 {
+			shape := g.shapes[i]
+			shape[0] = 1
+			tensor, err := g.kernel.Output(g.inputs[i], shape, g.dtypes[i])
+			if err != nil {
+				return err
+			}
+			if tensor.DType == tensors.Double {
+				tensor.DoubleData[0] = float64(input[i])
+			} else {
+				tensor.FloatData[0] = input[i]
+			}
+		} else {
+			err := g.setupFor1DFloat32Input(i, input)
+			if err != nil {
+				return err
+			}
+		}
+	}
+	g.execute()
+	return nil
+}
+
+func (g *Graph) Execute2DFloat32(input [][]float32) error {
+	// setups the input tensor
+	length := len(g.inputs)
+	if length > 1 && length != len(input) {
+		return fmt.Errorf("args count not equal, got %d, wanted %d", len(input), length)
+	}
+	for index := range g.inputs {
+		if g.dtypes[index] != tensors.Float && g.dtypes[index] != tensors.Double {
+			return fmt.Errorf("expected float or double inputs, got %d", g.dtypes[index])
+		}
+		if length > 1 {
+			err := g.setupFor1DFloat32Input(index, input[index])
+			if err != nil {
+				return err
+			}
+		} else {
+			err := g.setupFor2DFloat32Input(index, input)
+			if err != nil {
+				return err
+			}
+		}
+	}
+	g.execute()
+	return nil
+}
+
+func (g *Graph) Execute3DFloat32(input [][][]float32) error {
+	length := len(g.inputs)
+	if length > 1 && length != len(input) {
+		return fmt.Errorf("args count not equal, got %d, wanted %d", len(input), length)
+	} else if length == 1 {
+		return fmt.Errorf("3D input not currently supported")
+	}
+	for index := range g.inputs {
+		if g.dtypes[index] != tensors.Float && g.dtypes[index] != tensors.Double {
+			return fmt.Errorf("expected float or double inputs, got %d", g.dtypes[index])
+		}
+		err := g.setupFor2DFloat32Input(index, input[index])
+		if err != nil {
+			return err
+		}
+	}
+	g.execute()
+	return nil
+}
+
+func (g *Graph) execute() {
+	for _, node := range g.nodes {
+		err := node.Compute(g.kernel)
+		if err != nil {
+			panic(err)
+		}
+	}
+}
+
+func (g *Graph) Print() {
+	for _, o := range g.output {
+		fmt.Println(g.kernel.Get(o))
 	}
 }

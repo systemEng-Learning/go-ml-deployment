@@ -23,19 +23,21 @@ func (t *Tensor) Cast(to DataType) {
 }
 
 func (t *Tensor) castFloattoDouble() {
-	t.DoubleData = make([]float64, len(t.FloatData))
+	if len(t.DoubleData) < len(t.FloatData) {
+		t.DoubleData = make([]float64, len(t.FloatData))
+	}
 	for i := range t.FloatData {
 		t.DoubleData[i] = float64(t.FloatData[i])
 	}
-	t.FloatData = nil
 	t.DType = Double
 }
 
 func (t *Tensor) castDoubleToFloat() {
-	t.FloatData = make([]float32, len(t.DoubleData))
+	if len(t.FloatData) < len(t.DoubleData) {
+		t.FloatData = make([]float32, len(t.DoubleData))
+	}
 	for i := range t.DoubleData {
 		t.FloatData[i] = float32(t.DoubleData[i])
 	}
-	t.DoubleData = nil
 	t.DType = Float
 }

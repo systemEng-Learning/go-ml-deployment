@@ -17,7 +17,7 @@ type Cast struct {
 }
 
 func (c *Cast) Init(k *kernel.Kernel, node *ir.NodeProto) error {
-	input, err := k.GetTensorIndex(node.Input[0])
+	input, err := k.RegisterReader(node.Input[0])
 	if err != nil {
 		return err
 	}
@@ -35,22 +35,31 @@ func (c *Cast) Init(k *kernel.Kernel, node *ir.NodeProto) error {
 			return fmt.Errorf("%s not supported for %s", attr.Name, node.OpType)
 		}
 	}
-	c.output = k.RegisterTensor(node.Output[0])
+	c.output = k.RegisterWriter(node.Output[0])
 	return nil
 }
 
 func (c *Cast) Compute(k *kernel.Kernel) error {
-	input, err := k.Input(c.input)
+	data, err := k.Input(c.input)
+	input := data.Tensor
 	if err != nil {
 		return err
 	}
 	if input.DType != c.to {
 		return errors.ErrUnsupported
 	}
-	output, err := input.Clone()
-	if err != nil {
-		return err
+	if data.Readers == 1 {
+		// Just place input in output
+		err = k.Put(c.output, input)
+	} else {
+		// We are not the only reader, so clone
+		var output *tensors.Tensor
+		output, err = input.Clone()
+		if err != nil {
+			return err
+		}
+		err = k.Put(c.output, output)
 	}
-	err = k.Put(c.output, output)
+
 	return err
 }

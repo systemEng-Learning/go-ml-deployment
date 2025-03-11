@@ -62,7 +62,7 @@ func (g *Graph) setInputsTensor() error {
 			return fmt.Errorf("graph setinputtensor: want inputs of at most 2 dimensions, got %d", len(shape))
 		}
 		dtype := tensors.OnnxTypeToDtype(tensor.TensorType.ElemType)
-		index := g.kernel.RegisterTensor(input.Name)
+		index := g.kernel.RegisterWriter(input.Name)
 		g.inputs[i] = index
 		g.shapes[i] = shape
 		g.dtypes[i] = dtype
@@ -129,7 +129,7 @@ func (g *Graph) initializeNodes() error {
 func (g *Graph) setOutputIndices() error {
 	g.output = make([]int, len(g.graph.Output))
 	for i, o := range g.graph.Output {
-		index, err := g.kernel.GetTensorIndex(o.Name)
+		index, err := g.kernel.RegisterReader(o.Name)
 		if err != nil {
 			return err
 		}

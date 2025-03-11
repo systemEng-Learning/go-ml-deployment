@@ -21,7 +21,7 @@ type LinearClassifier struct {
 }
 
 func (l *LinearClassifier) Init(k *kernel.Kernel, node *ir.NodeProto) error {
-	input, err := k.GetTensorIndex(node.Input[0])
+	input, err := k.RegisterReader(node.Input[0])
 	if err != nil {
 		return err
 	}
@@ -62,16 +62,17 @@ func (l *LinearClassifier) Init(k *kernel.Kernel, node *ir.NodeProto) error {
 	l.outputs = make([]int, len(node.Output))
 
 	for i, output := range node.Output {
-		l.outputs[i] = k.RegisterTensor(output)
+		l.outputs[i] = k.RegisterWriter(output)
 	}
 	return nil
 }
 
 func (l *LinearClassifier) Compute(k *kernel.Kernel) error {
-	input, err := k.Input(l.input)
+	data, err := k.Input(l.input)
 	if err != nil {
 		return err
 	}
+	input := data.Tensor
 	if len(input.Shape) > 2 {
 		return fmt.Errorf("linearclassifier: invalid shape %v", input.Shape)
 	}

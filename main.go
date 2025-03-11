@@ -22,7 +22,6 @@ func main() {
 	if err := proto.Unmarshal(in, model); err != nil {
 		log.Fatalln("Failed to parse model file:", err)
 	}
-	fmt.Println(model)
 	printModel(model)
 	graphProto := model.GetGraph()
 	graph := graph.Graph{}

@@ -15,7 +15,7 @@ type Normalizer struct {
 }
 
 func (n *Normalizer) Init(k *kernel.Kernel, node *ir.NodeProto) error {
-	input, err := k.GetTensorIndex(node.Input[0])
+	input, err := k.RegisterReader(node.Input[0])
 	if err != nil {
 		return err
 	}
@@ -28,32 +28,38 @@ func (n *Normalizer) Init(k *kernel.Kernel, node *ir.NodeProto) error {
 			return fmt.Errorf("%s not supported for %s", attr.Name, node.OpType)
 		}
 	}
-	n.output = k.RegisterTensor(node.Output[0])
+	n.output = k.RegisterWriter(node.Output[0])
 	return nil
 }
 
 func (n *Normalizer) Compute(k *kernel.Kernel) error {
-	input, err := k.Input(n.input)
+	data, err := k.Input(n.input)
 	if err != nil {
 		return err
 	}
-	cloned, err := input.Clone()
-	if err != nil {
-		return err
+	original_dtype := data.Tensor.DType
+	var input *tensors.Tensor
+	if data.Readers == 1 {
+		input = data.Tensor
+	} else {
+		input, err = data.Tensor.Clone()
+		if err != nil {
+			return err
+		}
 	}
-	cloned.Cast(tensors.Double)
+	input.Cast(tensors.Double)
 	var sum float64
-	for i := range cloned.Shape[0] {
+	for i := range input.Shape[0] {
 		sum = 0
-		for j := range cloned.Shape[1] {
-			sum += cloned.DoubleData[i*cloned.Shape[1]+j]
+		for j := range input.Shape[1] {
+			sum += input.DoubleData[i*input.Shape[1]+j]
 		}
 
-		for j := range cloned.Shape[1] {
-			cloned.DoubleData[i*cloned.Shape[1]+j] = cloned.DoubleData[i*cloned.Shape[1]+j] / sum
+		for j := range input.Shape[1] {
+			input.DoubleData[i*input.Shape[1]+j] = input.DoubleData[i*input.Shape[1]+j] / sum
 		}
 	}
-	cloned.Cast(input.DType)
-	err = k.Put(n.output, cloned)
+	input.Cast(original_dtype)
+	err = k.Put(n.output, input)
 	return err
 }

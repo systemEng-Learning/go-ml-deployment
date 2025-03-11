@@ -18,7 +18,7 @@ type ZipMap struct {
 }
 
 func (z *ZipMap) Init(k *kernel.Kernel, node *ir.NodeProto) error {
-	input, err := k.GetTensorIndex(node.Input[0])
+	input, err := k.RegisterReader(node.Input[0])
 	if err != nil {
 		return err
 	}
@@ -41,21 +41,26 @@ func (z *ZipMap) Init(k *kernel.Kernel, node *ir.NodeProto) error {
 			return fmt.Errorf("%s not supported for %s", attr.Name, node.OpType)
 		}
 	}
-	z.output = k.RegisterTensor(node.Output[0])
+	z.output = k.RegisterWriter(node.Output[0])
 	return nil
 }
 
 func (z *ZipMap) Compute(k *kernel.Kernel) error {
-	input, err := k.Input(z.input)
+	data, err := k.Input(z.input)
 	if err != nil {
 		return err
 	}
+	input := data.Tensor
 	if z.array_like {
-		output, err := input.Clone()
-		if err != nil {
-			return err
+		if data.Readers == 1 {
+			k.Put(z.output, input)
+		} else {
+			output, err := input.Clone()
+			if err != nil {
+				return err
+			}
+			k.Put(z.output, output)
 		}
-		k.Put(z.output, output)
 		return nil
 	}
 	if input.DType != tensors.Float {

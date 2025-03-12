@@ -6,15 +6,15 @@ import (
 
 	"github.com/systemEng-Learning/go-ml-deployment/ir"
 	"github.com/systemEng-Learning/go-ml-deployment/kernel"
-	tensors "github.com/systemEng-Learning/go-ml-deployment/tensor"
+	"github.com/systemEng-Learning/go-ml-deployment/tensor"
 )
 
 type LinearClassifier struct {
 	input             int
 	classlabel        []int64
 	classlabel_string [][]byte
-	coefficients      *tensors.Tensor
-	intercepts        *tensors.Tensor
+	coefficients      *tensor.Tensor
+	intercepts        *tensor.Tensor
 	multiclass        bool
 	post_transform    string
 	outputs           []int
@@ -36,9 +36,9 @@ func (l *LinearClassifier) Init(k *kernel.Kernel, node *ir.NodeProto) error {
 		case "classlabels_strings":
 			l.classlabel_string = attr.Strings
 		case "coefficients":
-			l.coefficients = tensors.Create1DDoubleTensorFromFloat(attr.Floats)
+			l.coefficients = tensor.Create1DDoubleTensorFromFloat(attr.Floats)
 		case "intercepts":
-			l.intercepts = tensors.Create1DDoubleTensorFromFloat(attr.Floats)
+			l.intercepts = tensor.Create1DDoubleTensorFromFloat(attr.Floats)
 		case "multi_class":
 			if attr.I > 0 {
 				l.multiclass = true
@@ -94,20 +94,20 @@ func (l *LinearClassifier) Compute(k *kernel.Kernel) error {
 	num_classes := l.coefficients.Shape[0]
 	num_batches := input.Shape[0]
 
-	var labels *tensors.Tensor
+	var labels *tensor.Tensor
 	if l.classlabel != nil {
-		labels, err = k.Output(l.outputs[0], []int{num_batches}, tensors.Int64)
+		labels, err = k.Output(l.outputs[0], []int{num_batches}, tensor.Int64)
 		if err != nil {
 			return err
 		}
 	} else {
 		return errors.ErrUnsupported
 	}
-	scores, err := k.Output(l.outputs[1], []int{num_batches, num_classes}, tensors.Double)
+	scores, err := k.Output(l.outputs[1], []int{num_batches, num_classes}, tensor.Double)
 	if err != nil {
 		return err
 	}
-	input.Cast(tensors.Double)
+	input.Cast(tensor.Double)
 	scores, err = input.Dot(l.coefficients, scores)
 	if err != nil {
 		return err
@@ -140,6 +140,6 @@ func (l *LinearClassifier) Compute(k *kernel.Kernel) error {
 	} else if l.post_transform != "NONE" {
 		return errors.ErrUnsupported
 	}
-	scores.Cast(tensors.Float)
+	scores.Cast(tensor.Float)
 	return nil
 }

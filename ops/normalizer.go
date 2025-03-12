@@ -5,7 +5,7 @@ import (
 
 	"github.com/systemEng-Learning/go-ml-deployment/ir"
 	"github.com/systemEng-Learning/go-ml-deployment/kernel"
-	tensors "github.com/systemEng-Learning/go-ml-deployment/tensor"
+	"github.com/systemEng-Learning/go-ml-deployment/tensor"
 )
 
 type Normalizer struct {
@@ -38,7 +38,7 @@ func (n *Normalizer) Compute(k *kernel.Kernel) error {
 		return err
 	}
 	original_dtype := data.Tensor.DType
-	var input *tensors.Tensor
+	var input *tensor.Tensor
 	if data.Readers == 1 {
 		input = data.Tensor
 	} else {
@@ -47,7 +47,7 @@ func (n *Normalizer) Compute(k *kernel.Kernel) error {
 			return err
 		}
 	}
-	input.Cast(tensors.Double)
+	input.Cast(tensor.Double)
 	var sum float64
 	for i := range input.Shape[0] {
 		sum = 0

@@ -6,7 +6,7 @@ import (
 
 	"github.com/systemEng-Learning/go-ml-deployment/ir"
 	"github.com/systemEng-Learning/go-ml-deployment/kernel"
-	tensors "github.com/systemEng-Learning/go-ml-deployment/tensor"
+	"github.com/systemEng-Learning/go-ml-deployment/tensor"
 )
 
 type ZipMap struct {
@@ -63,13 +63,13 @@ func (z *ZipMap) Compute(k *kernel.Kernel) error {
 		}
 		return nil
 	}
-	if input.DType != tensors.Float {
+	if input.DType != tensor.Float {
 		return errors.ErrUnsupported
 	}
 	if z.classlabels_int64s == nil {
 		return errors.ErrUnsupported
 	}
-	output, err := k.Output(z.output, []int{input.Shape[0]}, tensors.IntMap)
+	output, err := k.Output(z.output, []int{input.Shape[0]}, tensor.IntMap)
 	if err != nil {
 		return err
 	}

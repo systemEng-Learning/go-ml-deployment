@@ -1,4 +1,4 @@
-package tensors
+package tensor
 
 import (
 	"fmt"

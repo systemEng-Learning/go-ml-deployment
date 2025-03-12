@@ -6,13 +6,13 @@ import (
 
 	"github.com/systemEng-Learning/go-ml-deployment/ir"
 	"github.com/systemEng-Learning/go-ml-deployment/kernel"
-	tensors "github.com/systemEng-Learning/go-ml-deployment/tensor"
+	"github.com/systemEng-Learning/go-ml-deployment/tensor"
 )
 
 type Cast struct {
 	input    int
 	output   int
-	to       tensors.DataType
+	to       tensor.DataType
 	saturate bool
 }
 
@@ -26,7 +26,7 @@ func (c *Cast) Init(k *kernel.Kernel, node *ir.NodeProto) error {
 	for _, attr := range node.Attribute {
 		switch attr.Name {
 		case "to":
-			c.to = tensors.OnnxTypeToDtype(int32(attr.I))
+			c.to = tensor.OnnxTypeToDtype(int32(attr.I))
 		case "saturate":
 			if attr.I == 0 {
 				c.saturate = false
@@ -53,7 +53,7 @@ func (c *Cast) Compute(k *kernel.Kernel) error {
 		err = k.Put(c.output, input)
 	} else {
 		// We are not the only reader, so clone
-		var output *tensors.Tensor
+		var output *tensor.Tensor
 		output, err = input.Clone()
 		if err != nil {
 			return err

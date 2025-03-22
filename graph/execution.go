@@ -23,17 +23,19 @@ func (ip *InputProcessor[T]) processStatic(v T, kernel *kernel.Kernel) error {
 	if ip.dtype == tensor.StringMap || ip.dtype == tensor.IntMap || ip.dtype == tensor.Undefined {
 		return fmt.Errorf("unsupported datatype: %s", ip.dtype)
 	}
-	capacity := ip.shape[0]
-	if len(ip.shape) > 1 {
-		capacity *= ip.shape[1]
+	shape := slices.Clone(ip.shape)
+	if shape[0] == -1 {
+		shape[0] = 1
 	}
-	if capacity < 0 {
-		capacity *= -1 // It is possible that shape[0] == -1.
+	capacity := shape[0]
+	if len(shape) > 1 {
+		capacity *= shape[1]
 	}
+
 	if capacity != 1 {
 		return fmt.Errorf("shape mismatch: static object cannot fit into input expected shape %v", ip.shape)
 	}
-	t, err := kernel.Output(ip.index, ip.shape, ip.dtype)
+	t, err := kernel.Output(ip.index, shape, ip.dtype)
 	if err != nil {
 		return err
 	}
@@ -108,6 +110,13 @@ func (ip *InputProcessor[T]) process2D(v [][]T, kernel *kernel.Kernel) error {
 	}
 
 	n := len(v[0])
+	// Ensure all columns sizes are the same
+	for i := 1; i < m; i++ {
+		if len(v[i]) != n {
+			return fmt.Errorf("rows don't have equal length")
+		}
+	}
+
 	if len(shape) != 2 {
 		return fmt.Errorf("input should be 2D, got %dD", len(shape))
 	}
@@ -155,6 +164,7 @@ func (g *Graph) Execute(input []any) error {
 	if length != len(input) {
 		return fmt.Errorf("the amount of input tensors isn't equal to expected, got %d, wanted %d", len(input), length)
 	}
+	var err error
 	for index := range g.inputs {
 		item := input[index]
 		shape := g.shapes[index]
@@ -162,51 +172,54 @@ func (g *Graph) Execute(input []any) error {
 		switch item := item.(type) {
 		case int32:
 			ip := InputProcessor[int32]{index: index, shape: shape, dtype: dtype}
-			ip.processStatic(item, g.kernel)
+			err = ip.processStatic(item, g.kernel)
 		case int:
 			ip := InputProcessor[int]{index: index, shape: shape, dtype: dtype}
-			ip.processStatic(item, g.kernel)
+			err = ip.processStatic(item, g.kernel)
 		case int64:
 			ip := InputProcessor[int64]{index: index, shape: shape, dtype: dtype}
-			ip.processStatic(item, g.kernel)
+			err = ip.processStatic(item, g.kernel)
 		case float32:
 			ip := InputProcessor[float32]{index: index, shape: shape, dtype: dtype}
-			ip.processStatic(item, g.kernel)
+			err = ip.processStatic(item, g.kernel)
 		case float64:
 			ip := InputProcessor[float64]{index: index, shape: shape, dtype: dtype}
-			ip.processStatic(item, g.kernel)
+			err = ip.processStatic(item, g.kernel)
 		case []int32:
 			ip := InputProcessor[int32]{index: index, shape: shape, dtype: dtype}
-			ip.process1D(item, g.kernel)
+			err = ip.process1D(item, g.kernel)
 		case []int:
 			ip := InputProcessor[int]{index: index, shape: shape, dtype: dtype}
-			ip.process1D(item, g.kernel)
+			err = ip.process1D(item, g.kernel)
 		case []int64:
 			ip := InputProcessor[int64]{index: index, shape: shape, dtype: dtype}
-			ip.process1D(item, g.kernel)
+			err = ip.process1D(item, g.kernel)
 		case []float32:
 			ip := InputProcessor[float32]{index: index, shape: shape, dtype: dtype}
-			ip.process1D(item, g.kernel)
+			err = ip.process1D(item, g.kernel)
 		case []float64:
 			ip := InputProcessor[float64]{index: index, shape: shape, dtype: dtype}
-			ip.process1D(item, g.kernel)
+			err = ip.process1D(item, g.kernel)
 		case [][]int32:
 			ip := InputProcessor[int32]{index: index, shape: shape, dtype: dtype}
-			ip.process2D(item, g.kernel)
+			err = ip.process2D(item, g.kernel)
 		case [][]int:
 			ip := InputProcessor[int]{index: index, shape: shape, dtype: dtype}
-			ip.process2D(item, g.kernel)
+			err = ip.process2D(item, g.kernel)
 		case [][]int64:
 			ip := InputProcessor[int64]{index: index, shape: shape, dtype: dtype}
-			ip.process2D(item, g.kernel)
+			err = ip.process2D(item, g.kernel)
 		case [][]float32:
 			ip := InputProcessor[float32]{index: index, shape: shape, dtype: dtype}
-			ip.process2D(item, g.kernel)
+			err = ip.process2D(item, g.kernel)
 		case [][]float64:
 			ip := InputProcessor[float64]{index: index, shape: shape, dtype: dtype}
-			ip.process2D(item, g.kernel)
+			err = ip.process2D(item, g.kernel)
 		default:
 			return fmt.Errorf("unsupported data type: %v", reflect.TypeOf(item))
+		}
+		if err != nil {
+			return err
 		}
 	}
 	g.RunNodes()

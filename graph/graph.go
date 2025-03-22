@@ -115,6 +115,10 @@ func (g *Graph) initializeNodes() error {
 			z := &ops.ZipMap{}
 			err = z.Init(g.kernel, node)
 			g.nodes = append(g.nodes, z)
+		case "LinearRegressor":
+			l := &ops.LinearRegressor{}
+			err = l.Init(g.kernel, node)
+			g.nodes = append(g.nodes, l)
 		default:
 			return fmt.Errorf("%s operation not supported", node.OpType)
 		}

@@ -1,0 +1,63 @@
+{
+  "irVersion": 10,
+  "opsetImport": [
+    {
+      "domain": "ai.onnx.ml",
+      "version": 1
+    },
+    {
+      "domain": "",
+      "version": 21
+    }
+  ],
+  "producerName": "skl2onnx",
+  "producerVersion": "1.18.0",
+  "domain": "ai.onnx",
+  "modelVersion": 0,
+  "docString": "",
+  "graph": {
+    "node": [
+      {
+        "input": ["float_input"],
+        "output": ["variable"],
+        "name": "LinearRegressor",
+        "opType": "LinearRegressor",
+        "domain": "ai.onnx.ml",
+        "attribute": [
+          {
+            "name": "coefficients",
+            "type": 6,
+            "floats": [0.1, 0.2, 0.3, 0.4]
+          }
+        ]
+      }
+    ],
+    "name": "graph_no_intercept",
+    "input": [
+      {
+        "name": "float_input",
+        "type": {
+          "tensorType": {
+            "elemType": 1,
+            "shape": {
+              "dim": [{}, { "dimValue": 4 }]
+            }
+          }
+        }
+      }
+    ],
+    "output": [
+      {
+        "name": "variable",
+        "type": {
+          "tensorType": {
+            "elemType": 1,
+            "shape": {
+              "dim": [{}, { "dimValue": 1 }]
+            }
+          }
+        }
+      }
+    ]
+  }
+}

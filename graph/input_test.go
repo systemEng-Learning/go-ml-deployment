@@ -15,11 +15,20 @@ func TestExecute_CorrectInput(t *testing.T) {
 	}
 	g.kernel.Init()
 	g.inputs = []int{g.kernel.RegisterWriter("input1")}
+	index, _ := g.kernel.RegisterReader("input1")
+	g.outputs = []int{index}
 
 	input := []any{[]float32{1.0, 2.0, 3.0}}
-	_, err := g.Execute(input)
+	arr, err := g.Execute(input)
 	if err != nil {
 		t.Errorf("Expected no error, got: %v", err)
+	}
+
+	f32 := arr[0].([]float32)
+	want := float32(2.0)
+	got := f32[1]
+	if got != want {
+		t.Errorf("Wanted %f got: %f", want, got)
 	}
 }
 
@@ -31,12 +40,20 @@ func TestExecute_StaticValue(t *testing.T) {
 	}
 	g.kernel.Init()
 	g.inputs = []int{g.kernel.RegisterWriter("input1")}
+	index, _ := g.kernel.RegisterReader("input1")
+	g.outputs = []int{index}
 
 	staticValue := float32(42.0)
 
-	_, err := g.Execute([]any{staticValue})
+	arr, err := g.Execute([]any{staticValue})
 	if err != nil {
 		t.Errorf("Expected no error when processing static value, got: %v", err)
+	}
+
+	f32 := arr[0].([][]float32)
+	got := f32[0][0]
+	if got != staticValue {
+		t.Errorf("Wanted %f got: %f", staticValue, got)
 	}
 }
 
@@ -80,11 +97,32 @@ func TestExecute_MultipleInputs(t *testing.T) {
 	}
 	g.kernel.Init()
 	g.inputs = []int{g.kernel.RegisterWriter("input1"), g.kernel.RegisterWriter("input2")}
+	one, _ := g.kernel.RegisterReader("input1")
+	two, _ := g.kernel.RegisterReader("input2")
+	g.outputs = []int{one, two}
 
 	input := []any{[]float32{1.0, 2.0, 3.0}, []int32{4, 5, 6}}
-	_, err := g.Execute(input)
+	arr, err := g.Execute(input)
 	if err != nil {
 		t.Errorf("Expected no error for multiple inputs, got: %v", err)
+	}
+
+	{
+		f32 := arr[0].([]float32)
+		want := float32(3.0)
+		got := f32[2]
+		if got != want {
+			t.Errorf("Wanted %f got: %f", want, got)
+		}
+	}
+
+	{
+		i32 := arr[1].([]int32)
+		want := int32(5)
+		got := i32[1]
+		if got != want {
+			t.Errorf("Wanted %d got: %d", want, got)
+		}
 	}
 }
 
@@ -128,11 +166,20 @@ func TestExecute_CastIntToDouble(t *testing.T) {
 	}
 	g.kernel.Init()
 	g.inputs = []int{g.kernel.RegisterWriter("input1")}
+	index, _ := g.kernel.RegisterReader("input1")
+	g.outputs = []int{index}
 
 	input := []any{[]int{1, 2, 3}}
-	_, err := g.Execute(input)
+	arr, err := g.Execute(input)
 	if err != nil {
 		t.Errorf("Expected no error when casting int to double, got: %v", err)
+	}
+
+	f32 := arr[0].([]float64)
+	want := 2.0
+	got := f32[1]
+	if got != want {
+		t.Errorf("Wanted %f got: %f", want, got)
 	}
 }
 
@@ -144,11 +191,20 @@ func TestExecute_CastDoubleToInt32(t *testing.T) {
 	}
 	g.kernel.Init()
 	g.inputs = []int{g.kernel.RegisterWriter("input1")}
+	index, _ := g.kernel.RegisterReader("input1")
+	g.outputs = []int{index}
 
 	input := []any{[]float64{1.9, 2.5, 3.1}}
-	_, err := g.Execute(input)
+	arr, err := g.Execute(input)
 	if err != nil {
 		t.Errorf("Expected no error when casting float to int32, got: %v", err)
+	}
+
+	i32 := arr[0].([]int32)
+	want := int32(2)
+	got := i32[1]
+	if got != want {
+		t.Errorf("Wanted %d got: %d", want, got)
 	}
 }
 
@@ -160,11 +216,20 @@ func TestExecute_ReshapeInput(t *testing.T) {
 	}
 	g.kernel.Init()
 	g.inputs = []int{g.kernel.RegisterWriter("input1")}
+	index, _ := g.kernel.RegisterReader("input1")
+	g.outputs = []int{index}
 
 	input := []any{[]float32{1.0, 2.0, 3.0, 4.0, 5.0, 6.0}}
-	_, err := g.Execute(input)
+	arr, err := g.Execute(input)
 	if err != nil {
 		t.Errorf("Expected no error when reshaping input, got: %v", err)
+	}
+
+	f32 := arr[0].([][]float32)
+	want := float32(4.0)
+	got := f32[1][0]
+	if got != want {
+		t.Errorf("Wanted %f got: %f", want, got)
 	}
 }
 

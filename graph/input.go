@@ -159,7 +159,7 @@ func (ip *InputProcessor[T]) process2D(v [][]T, kernel *kernel.Kernel) error {
 	return nil
 }
 
-func (g *Graph) Execute(input []any) error {
+func (g *Graph) setInputs(input []any) error {
 	length := len(g.inputs)
 	if length != len(input) {
 		return fmt.Errorf("the amount of input tensors isn't equal to expected, got %d, wanted %d", len(input), length)
@@ -222,6 +222,5 @@ func (g *Graph) Execute(input []any) error {
 			return err
 		}
 	}
-	g.RunNodes()
 	return nil
 }

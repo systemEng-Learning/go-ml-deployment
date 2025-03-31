@@ -34,7 +34,7 @@ func TestLinearRegressorValid1D(t *testing.T) {
 	g.Init(graphProto)
 
 	oneDSample := []float32{5.9, 3.2, 4.8, 1.8}
-	if err := g.Execute([]any{oneDSample}); err != nil {
+	if _, err := g.Execute([]any{oneDSample}); err != nil {
 		t.Fatalf("LinearRegressor1D failed: %v", err)
 	}
 	t.Log("Output after LinearRegressor1D (valid with intercept):")
@@ -54,7 +54,7 @@ func TestLinearRegressorValid2D(t *testing.T) {
 		{5.1, 3.4, 1.5, 0.2},
 		{7.4, 2.8, 6.1, 1.9},
 	}
-	if err := g.Execute([]any{twoDSamples}); err != nil {
+	if _, err := g.Execute([]any{twoDSamples}); err != nil {
 		t.Fatalf("LinearRegressor2D failed: %v", err)
 	}
 	t.Log("Output after LinearRegressor2D (valid with intercept):")
@@ -70,7 +70,7 @@ func TestLinearRegressorNoIntercept(t *testing.T) {
 	g.Init(graphProto)
 
 	oneDSample := []float32{6.1, 2.8, 5.6, 1.5}
-	if err := g.Execute([]any{oneDSample}); err != nil {
+	if _, err := g.Execute([]any{oneDSample}); err != nil {
 		t.Fatalf("LinearRegressor1D (no intercept) failed: %v", err)
 	}
 	t.Log("Output after LinearRegressor1D (no intercept):")

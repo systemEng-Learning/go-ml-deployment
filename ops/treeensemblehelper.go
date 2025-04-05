@@ -1,7 +1,6 @@
 package ops
 
 import (
-	"errors"
 	"fmt"
 	"math"
 	"sort"
@@ -16,137 +15,181 @@ type TreeEnsembleAttributes struct {
 	Tensors map[string]*tensor.Tensor
 	Ints map[string][]int64
 	Strings map[string][][]byte
+	base_values *tensor.Tensor
+	base_values_as_tensor *tensor.Tensor
+	nodes_nodeids []int64
+	nodes_treeids []int64
+	nodes_featureids []int64
+	nodes_values *tensor.Tensor
+	nodes_values_as_tensor *tensor.Tensor
+	nodes_hitrates *tensor.Tensor
+	nodes_hitrates_as_tensor *tensor.Tensor
+	nodes_modes [][]byte
+	nodes_truenodeids []int64
+	nodes_falsenodeids []int64
+	nodes_missing_value_tracks_true []int64
+	class_treeids []int64
+	class_nodeids []int64
+	class_ids []int64
+	class_weights *tensor.Tensor
+	class_weights_as_tensor *tensor.Tensor
+	classlabels_strings [][]byte
+	classlabels_int64s []int64
+	post_transform string
+	target_treeids []int64
+	target_nodeids []int64
+	target_ids []int64
+	target_weights *tensor.Tensor
+	target_weights_as_tensor *tensor.Tensor
+	n_target int64
+	aggregate_function []byte
 }
 
-func NewTreeEnsembleAttributes() *TreeEnsembleAttributes {
-	return &TreeEnsembleAttributes{
-		name: []string{},
-		Tensors: make(map[string]*tensor.Tensor),
-		Ints: make(map[string][]int64),
-		Strings: make(map[string][][]byte),
-	}
-}
-
-// Todo
-// the numbers of Tree attribute are not fully known
-// once all tree models are implemented, we can remove this Method
-// and manually define all attributed in the TreeEnsembleAttributes
-func (t *TreeEnsembleAttributes) GetAttr(name string, out interface{}) error {
-    if val, ok := t.Ints[name]; ok {
-        if ptr, ok := out.(*[]int64); ok {
-            *ptr = val
-            return nil
-        }
-        return errors.New("type mismatch: expected *[]int64")
-    }
-
-    if val, ok := t.Strings[name]; ok {
-        if ptr, ok := out.(*[][]byte); ok {
-            *ptr = val
-            return nil
-        }
-        return errors.New("type mismatch: expected *[][]byte")
-    }
-
-    if val, ok := t.Tensors[name]; ok {
-        if ptr, ok := out.(**tensor.Tensor); ok {
-            *ptr = val
-            return nil
-        }
-        return errors.New("type mismatch: expected **tensor.Tensor")
-    }
-
-    return errors.New("attribute not found")
-}
-
-func removeDuplicatesAndSort(input []int) []int {
-	uniqueMap := make(map[int]struct{}) // Use a map to track unique values
-	var uniqueSlice []int
+func removeDuplicatesAndSort(input []int64) []int64 {
+	uniqueMap := make(map[int64]struct{}) // Use a map to track unique values
+	var uniqueSlice []int64
 	for _, num := range input {
 		if _, exists := uniqueMap[num]; !exists {
 			uniqueMap[num] = struct{}{}
 			uniqueSlice = append(uniqueSlice, num)
 		}
 	}
-	sort.Ints(uniqueSlice)
-	return uniqueSlice
+	sort.Slice(uniqueSlice, func(i, j int) bool {
+        return uniqueSlice[i] < uniqueSlice[j]
+    })
+    
+    return uniqueSlice
 }
 
 
-
-
 type TreeNodeKey struct {
-    TreeID int
-    NodeID int
+    TreeID int64
+    NodeID int64
 }
 
 type TreeEnsemble struct {
 	Atts *TreeEnsembleAttributes
-	TreeIds  []int
-	RootIndex map[int]int
+	TreeIds  []int64
+	RootIndex map[int64]int
 	NodeIndex  map[TreeNodeKey]int
 }
 
 func (t *TreeEnsemble) Init(node *ir.NodeProto) error{
-	t.Atts = NewTreeEnsembleAttributes()
-	for _, attr := range node.Attribute {
-		has_tensor := false
-		if strings.HasSuffix(attr.Name, "_as_tensor") {
-			has_tensor = true
-			t.Atts.name = append(t.Atts.name, attr.Name)
-		}
-		switch attr.Type {
-		case ir.AttributeProto_INT:
-			if has_tensor {
-				int_tensor := &tensor.Tensor{
-					Shape: []int{len(attr.Ints)},
-					DType: tensor.Int64,
-					Int64Data: attr.Ints,
-				}
-				t.Atts.Tensors[attr.Name] = int_tensor
-			} else {
-				t.Atts.Ints[attr.Name] = attr.Ints
+	t.Atts = &TreeEnsembleAttributes{}
+	
+	for _, attr :=  range node.Attribute {
+		switch attr.Name {
+		case "base_values":
+			t.Atts.base_values = &tensor.Tensor{
+				Shape: []int{len(attr.Floats)},
+				DType: tensor.Float,
+				FloatData: attr.Floats,
 			}
-		case ir.AttributeProto_FLOAT:
-			float_tensor := tensor.Create1DDoubleTensorFromFloat(attr.Floats)
-			t.Atts.Tensors[attr.Name] = float_tensor
-		case ir.AttributeProto_STRING:
-			t.Atts.Strings[attr.Name] = attr.Strings
-
+		case "base_values_as_tensor":
+			base_tensor, err := tensor.FromTensorProto(attr.T)
+			if err != nil {
+				return fmt.Errorf("failed to create tensor from base_values_as_tensor: %v", err)
+			}
+			t.Atts.base_values_as_tensor = base_tensor
+		case "nodes_values":
+			t.Atts.nodes_values = &tensor.Tensor{
+				Shape: []int{len(attr.Floats)},
+				DType: tensor.Float,
+				FloatData: attr.Floats,
+			}
+		case "nodes_values_as_tensor":
+			nodes_tensor, err := tensor.FromTensorProto(attr.T)
+			if err != nil {
+				return fmt.Errorf("failed to create tensor from nodes_values_as_tensor: %v", err)
+			}
+			t.Atts.nodes_values_as_tensor = nodes_tensor
+		case "nodes_hitrates":
+			t.Atts.nodes_hitrates = &tensor.Tensor{
+				Shape: []int{len(attr.Floats)},
+				DType: tensor.Float,
+				FloatData: attr.Floats,
+			}
+		case "nodes_hitrates_as_tensor":
+			nodes_hitrates_tensor, err := tensor.FromTensorProto(attr.T)
+			if err != nil {
+				return fmt.Errorf("failed to create tensor from nodes_hitrates_as_tensor: %v", err)
+			}
+			t.Atts.nodes_hitrates_as_tensor = nodes_hitrates_tensor
+		case "nodes_modes":
+			t.Atts.nodes_modes = attr.Strings
+		case "nodes_truenodeids":
+			t.Atts.nodes_truenodeids = attr.Ints
+		case "nodes_falsenodeids":
+			t.Atts.nodes_falsenodeids = attr.Ints
+		case "nodes_missing_value_tracks_true":
+			t.Atts.nodes_missing_value_tracks_true = attr.Ints
+		case "class_treeids":
+			t.Atts.class_treeids = attr.Ints
+		case "class_nodeids":
+			t.Atts.class_nodeids = attr.Ints
+		case "class_ids":
+			t.Atts.class_ids = attr.Ints
+		case "class_weights":
+			t.Atts.class_weights = &tensor.Tensor{
+				Shape: []int{len(attr.Floats)},
+				DType: tensor.Float,
+				FloatData: attr.Floats,
+			}
+		case "class_weights_as_tensor":
+			class_weights_tensor, err := tensor.FromTensorProto(attr.T)
+			if err != nil {
+				return fmt.Errorf("failed to create tensor from class_weights_as_tensor: %v", err)
+			}
+			t.Atts.class_weights_as_tensor = class_weights_tensor
+		case "classlabels_strings":
+			t.Atts.classlabels_strings = attr.Strings
+		case "classlabels_ints":
+			t.Atts.classlabels_int64s = attr.Ints
+		case "post_transform":
+			t.Atts.post_transform = string(attr.S)
+		case "target_treeids":
+			t.Atts.target_treeids = attr.Ints
+		case "target_nodeids":
+			t.Atts.target_nodeids = attr.Ints
+		case "target_ids":
+			t.Atts.target_ids = attr.Ints
+		case "target_weights":
+			t.Atts.target_weights = &tensor.Tensor{
+				Shape: []int{len(attr.Floats)},
+				DType: tensor.Float,
+				FloatData: attr.Floats,
+			}
+		case "target_weights_as_tensor":
+			target_weights_tensor, err := tensor.FromTensorProto(attr.T)
+			if err != nil {
+				return fmt.Errorf("failed to create tensor from target_weights_as_tensor: %v", err)
+			}
+			t.Atts.target_weights_as_tensor = target_weights_tensor
+		case "n_target":
+			t.Atts.n_target = attr.I
+		case "aggregate_function":
+			t.Atts.aggregate_function = attr.Strings[0]
 		default:
-			return fmt.Errorf("unsupported data type: %s for attribute: %s", attr.Type, attr.Name)
-			
+			return fmt.Errorf("unsupported attribute: %s", attr.Name)
 		}
-
 	}
 
-	nodeTreeIDs := make([]int, 0)
+	t.TreeIds = removeDuplicatesAndSort(t.Atts.nodes_treeids)
 
-	if  err:= t.Atts.GetAttr("nodes_treeids", &nodeTreeIDs); err != nil {
-		return fmt.Errorf("failed to get attribute nodes_treeids: %v", err)
-	}
-
-	t.TreeIds = removeDuplicatesAndSort(nodeTreeIDs)
-
-	t.RootIndex = make(map[int]int)
+	t.RootIndex = make(map[int64]int)
 	for _, tid := range t.TreeIds {
 		t.RootIndex[tid] = len(t.TreeIds)
 	}
 
-	for index, tids := range nodeTreeIDs {
+	for index, tids := range t.Atts.nodes_treeids {
 		t.RootIndex[tids] = min(t.RootIndex[tids], index)
 	}
 
-	nodeNodeIDs := make([]int, 0)
-	if err := t.Atts.GetAttr("nodes_nodeids", &nodeNodeIDs); err != nil {
-		return fmt.Errorf("failed to get attribute nodes_nodeids: %v", err)
-	}
-
 	t.NodeIndex = make(map[TreeNodeKey]int)
-	for i := 0; i < len(nodeTreeIDs); i++ {
+	for i := 0; i < len(t.Atts.nodes_nodeids); i++ {
 		key := TreeNodeKey{
-			TreeID: nodeTreeIDs[i],
-			NodeID: nodeNodeIDs[i],
+			TreeID: t.Atts.nodes_treeids[i],
+			NodeID: t.Atts.nodes_nodeids[i],
 		}
 		t.NodeIndex[key] = i
 	}
@@ -163,34 +206,21 @@ func (t *TreeEnsemble) String() string {
 	return sb.String()
 }
 
-func (t *TreeEnsemble) LeafIndexTree(X []float64, treeid int) int {
+func (t *TreeEnsemble) LeafIndexTree(X []float32, treeid int64) int {
 	// compute the leaf index for one tree
 	index := t.RootIndex[treeid]
-	nodesModes := [][]byte{}
-	if err := t.Atts.GetAttr("nodes_modes", &nodesModes); err != nil {
-		return -1
-	}
-	for string(nodesModes[index]) != "LEAF" {
+	for string(t.Atts.nodes_modes[index]) != "LEAF" {
 		var r bool
-		nodesFeatureIDs := []int{}
-		if err := t.Atts.GetAttr("nodes_featureids", &nodesFeatureIDs); err != nil {
-			return -1
-		}
-		x := X[nodesFeatureIDs[index]]
-		if math.IsNaN(x) {
-			nodes_missing_value_tracks_true := []int{}
-			if err := t.Atts.GetAttr("nodes_missing_value_tracks_true", &nodes_missing_value_tracks_true); err != nil {
-				return -1
-			}
-			r = nodes_missing_value_tracks_true[index] >= 1
+		
+		x := X[t.Atts.nodes_featureids[index]]
+		if math.IsNaN(float64(x)) {
+			
+			r = t.Atts.nodes_missing_value_tracks_true[index] >= 1
 
 		} else {
-			rules := nodesModes[index]
-			nodes_values := []float64{}
-			if err := t.Atts.GetAttr("nodes_values", &nodes_values); err != nil {
-				return -1
-			}
-			th := nodes_values[index]
+			rules := t.Atts.nodes_modes[index]
+			
+			th := t.Atts.nodes_values.FloatData[index]
 			switch string(rules) {
 			case "BRANCH_LEQ":
 				r = x <= th
@@ -210,19 +240,11 @@ func (t *TreeEnsemble) LeafIndexTree(X []float64, treeid int) int {
 			
 		}
 		
-		var nid int
+		var nid int64
 		if r {
-			nodes_truenodeids := []int{}
-			if err := t.Atts.GetAttr("nodes_truenodeids", &nodes_truenodeids); err != nil {
-				return -1
-			}
-			nid = nodes_truenodeids[index]
+			nid = t.Atts.nodes_truenodeids[index]
 		} else {
-			nodes_falsenodeids := []int{}
-			if err := t.Atts.GetAttr("nodes_falsenodeids", &nodes_falsenodeids); err != nil {
-				return -1
-			}
-			nid = nodes_falsenodeids[index]
+			nid = t.Atts.nodes_falsenodeids[index]
 		}
 		index = t.NodeIndex[TreeNodeKey{TreeID: treeid, NodeID: nid}]
 
@@ -242,7 +264,7 @@ func (t *TreeEnsemble) LeaveIndexTrees(X *tensor.Tensor) []int {
 	for i := 0; i < nSamples; i++ {
 		startIdx := i * nFeatures
 		endIdx := startIdx + nFeatures
-		rowData := X.DoubleData[startIdx:endIdx]
+		rowData := X.FloatData[startIdx:endIdx]
 		leaves := make([]int, len(t.TreeIds))
 		for j, treeid := range t.TreeIds {
 			leaves[j] =t.LeafIndexTree(rowData, treeid)

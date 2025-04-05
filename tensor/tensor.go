@@ -278,3 +278,35 @@ func OnnxTypeToDtype(elemType int32) DataType {
 		return Undefined
 	}
 }
+
+func  FromTensorProto(Tp *ir.TensorProto) (*Tensor, error) {
+	dataType := Tp.DataType
+	t := &Tensor{}
+	
+	t.Shape = make([]int, len(Tp.Dims))
+	for i := range Tp.Dims {
+		t.Shape[i] = int(Tp.Dims[i])
+	}
+	elemTypeStr := ir.TensorProto_DataType_name[dataType]
+	switch elemTypeStr {
+	case "FLOAT":
+		t.FloatData = Tp.FloatData
+		t.Shape = []int{len(t.FloatData)}
+		t.DType = Float
+		return t, nil
+	case "INT32":
+		t.Int32Data = Tp.Int32Data
+		t.DType = Int32
+		return t, nil
+	case "INT64":
+		t.Int64Data = Tp.Int64Data
+		t.DType = Int64
+		return t, nil
+	case "DOUBLE":
+		t.DoubleData = Tp.DoubleData
+		t.DType = Double
+		return t, nil
+	default:
+		return nil, fmt.Errorf("tensor copy: unsupported data type %d", t.DType)
+	}
+}

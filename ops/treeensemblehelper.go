@@ -11,38 +11,38 @@ import (
 )
 
 type TreeEnsembleAttributes struct {
-	name []string
-	Tensors map[string]*tensor.Tensor
-	Ints map[string][]int64
-	Strings map[string][][]byte
-	base_values *tensor.Tensor
-	base_values_as_tensor *tensor.Tensor
-	nodes_nodeids []int64
-	nodes_treeids []int64
-	nodes_featureids []int64
-	nodes_values *tensor.Tensor
-	nodes_values_as_tensor *tensor.Tensor
-	nodes_hitrates *tensor.Tensor
-	nodes_hitrates_as_tensor *tensor.Tensor
-	nodes_modes [][]byte
-	nodes_truenodeids []int64
-	nodes_falsenodeids []int64
+	name                            []string
+	Tensors                         map[string]*tensor.Tensor
+	Ints                            map[string][]int64
+	Strings                         map[string][][]byte
+	base_values                     *tensor.Tensor
+	base_values_as_tensor           *tensor.Tensor
+	nodes_nodeids                   []int64
+	nodes_treeids                   []int64
+	nodes_featureids                []int64
+	nodes_values                    *tensor.Tensor
+	nodes_values_as_tensor          *tensor.Tensor
+	nodes_hitrates                  *tensor.Tensor
+	nodes_hitrates_as_tensor        *tensor.Tensor
+	nodes_modes                     [][]byte
+	nodes_truenodeids               []int64
+	nodes_falsenodeids              []int64
 	nodes_missing_value_tracks_true []int64
-	class_treeids []int64
-	class_nodeids []int64
-	class_ids []int64
-	class_weights *tensor.Tensor
-	class_weights_as_tensor *tensor.Tensor
-	classlabels_strings [][]byte
-	classlabels_int64s []int64
-	post_transform string
-	target_treeids []int64
-	target_nodeids []int64
-	target_ids []int64
-	target_weights *tensor.Tensor
-	target_weights_as_tensor *tensor.Tensor
-	n_target int64
-	aggregate_function []byte
+	class_treeids                   []int64
+	class_nodeids                   []int64
+	class_ids                       []int64
+	class_weights                   *tensor.Tensor
+	class_weights_as_tensor         *tensor.Tensor
+	classlabels_strings             [][]byte
+	classlabels_int64s              []int64
+	post_transform                  string
+	target_treeids                  []int64
+	target_nodeids                  []int64
+	target_ids                      []int64
+	target_weights                  *tensor.Tensor
+	target_weights_as_tensor        *tensor.Tensor
+	n_target                        int64
+	aggregate_function              []byte
 }
 
 func removeDuplicatesAndSort(input []int64) []int64 {
@@ -55,34 +55,33 @@ func removeDuplicatesAndSort(input []int64) []int64 {
 		}
 	}
 	sort.Slice(uniqueSlice, func(i, j int) bool {
-        return uniqueSlice[i] < uniqueSlice[j]
-    })
-    
-    return uniqueSlice
+		return uniqueSlice[i] < uniqueSlice[j]
+	})
+
+	return uniqueSlice
 }
 
-
 type TreeNodeKey struct {
-    TreeID int64
-    NodeID int64
+	TreeID int64
+	NodeID int64
 }
 
 type TreeEnsemble struct {
-	Atts *TreeEnsembleAttributes
-	TreeIds  []int64
+	Atts      *TreeEnsembleAttributes
+	TreeIds   []int64
 	RootIndex map[int64]int
-	NodeIndex  map[TreeNodeKey]int
+	NodeIndex map[TreeNodeKey]int
 }
 
-func (t *TreeEnsemble) Init(node *ir.NodeProto) error{
+func (t *TreeEnsemble) Init(node *ir.NodeProto) error {
 	t.Atts = &TreeEnsembleAttributes{}
-	
-	for _, attr :=  range node.Attribute {
+
+	for _, attr := range node.Attribute {
 		switch attr.Name {
 		case "base_values":
 			t.Atts.base_values = &tensor.Tensor{
-				Shape: []int{len(attr.Floats)},
-				DType: tensor.Float,
+				Shape:     []int{len(attr.Floats)},
+				DType:     tensor.Float,
 				FloatData: attr.Floats,
 			}
 		case "base_values_as_tensor":
@@ -93,8 +92,8 @@ func (t *TreeEnsemble) Init(node *ir.NodeProto) error{
 			t.Atts.base_values_as_tensor = base_tensor
 		case "nodes_values":
 			t.Atts.nodes_values = &tensor.Tensor{
-				Shape: []int{len(attr.Floats)},
-				DType: tensor.Float,
+				Shape:     []int{len(attr.Floats)},
+				DType:     tensor.Float,
 				FloatData: attr.Floats,
 			}
 		case "nodes_values_as_tensor":
@@ -105,8 +104,8 @@ func (t *TreeEnsemble) Init(node *ir.NodeProto) error{
 			t.Atts.nodes_values_as_tensor = nodes_tensor
 		case "nodes_hitrates":
 			t.Atts.nodes_hitrates = &tensor.Tensor{
-				Shape: []int{len(attr.Floats)},
-				DType: tensor.Float,
+				Shape:     []int{len(attr.Floats)},
+				DType:     tensor.Float,
 				FloatData: attr.Floats,
 			}
 		case "nodes_hitrates_as_tensor":
@@ -131,8 +130,8 @@ func (t *TreeEnsemble) Init(node *ir.NodeProto) error{
 			t.Atts.class_ids = attr.Ints
 		case "class_weights":
 			t.Atts.class_weights = &tensor.Tensor{
-				Shape: []int{len(attr.Floats)},
-				DType: tensor.Float,
+				Shape:     []int{len(attr.Floats)},
+				DType:     tensor.Float,
 				FloatData: attr.Floats,
 			}
 		case "class_weights_as_tensor":
@@ -155,8 +154,8 @@ func (t *TreeEnsemble) Init(node *ir.NodeProto) error{
 			t.Atts.target_ids = attr.Ints
 		case "target_weights":
 			t.Atts.target_weights = &tensor.Tensor{
-				Shape: []int{len(attr.Floats)},
-				DType: tensor.Float,
+				Shape:     []int{len(attr.Floats)},
+				DType:     tensor.Float,
 				FloatData: attr.Floats,
 			}
 		case "target_weights_as_tensor":
@@ -211,15 +210,15 @@ func (t *TreeEnsemble) LeafIndexTree(X []float32, treeid int64) int {
 	index := t.RootIndex[treeid]
 	for string(t.Atts.nodes_modes[index]) != "LEAF" {
 		var r bool
-		
+
 		x := X[t.Atts.nodes_featureids[index]]
 		if math.IsNaN(float64(x)) {
-			
+
 			r = t.Atts.nodes_missing_value_tracks_true[index] >= 1
 
 		} else {
 			rules := t.Atts.nodes_modes[index]
-			
+
 			th := t.Atts.nodes_values.FloatData[index]
 			switch string(rules) {
 			case "BRANCH_LEQ":
@@ -237,9 +236,9 @@ func (t *TreeEnsemble) LeafIndexTree(X []float32, treeid int64) int {
 			default:
 				return -1
 			}
-			
+
 		}
-		
+
 		var nid int64
 		if r {
 			nid = t.Atts.nodes_truenodeids[index]
@@ -267,7 +266,7 @@ func (t *TreeEnsemble) LeaveIndexTrees(X *tensor.Tensor) []int {
 		rowData := X.FloatData[startIdx:endIdx]
 		leaves := make([]int, len(t.TreeIds))
 		for j, treeid := range t.TreeIds {
-			leaves[j] =t.LeafIndexTree(rowData, treeid)
+			leaves[j] = t.LeafIndexTree(rowData, treeid)
 		}
 		outputs = append(outputs, leaves...)
 	}

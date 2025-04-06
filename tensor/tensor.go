@@ -19,6 +19,7 @@ const (
 	Double
 	StringMap
 	IntMap
+	String
 )
 
 var dataTypeMap = map[DataType]string{
@@ -29,6 +30,8 @@ var dataTypeMap = map[DataType]string{
 	Double:    "double",
 	StringMap: "stringmap",
 	IntMap:    "intmap",
+	String:    "string",
+
 }
 
 func (dt DataType) String() string {
@@ -44,6 +47,7 @@ type Tensor struct {
 	DoubleData []float64
 	IntMap     []map[int]float32
 	StringMap  []map[string]float32
+	StringData [][]byte
 }
 
 func (t *Tensor) Clone() (*Tensor, error) {
@@ -61,6 +65,8 @@ func (t *Tensor) Clone() (*Tensor, error) {
 		newTensor.IntMap = slices.Clone(t.IntMap)
 	case StringMap:
 		newTensor.StringMap = slices.Clone(t.StringMap)
+	case String:
+		newTensor.StringData = slices.Clone(t.StringData)
 	default:
 		return nil, fmt.Errorf("tensor copy: unsupported data type %d", t.DType)
 	}
@@ -91,7 +97,10 @@ func CreateEmptyTensor(shape []int, dataType DataType) (*Tensor, error) {
 		t.IntMap = make([]map[int]float32, shape[0])
 	case StringMap:
 		t.StringMap = make([]map[string]float32, shape[0])
+	case String:
+		t.StringData = make([][]byte, shape[0]*shape[1])
 	}
+
 	return t, nil
 }
 
@@ -128,6 +137,8 @@ func (t *Tensor) Clear() {
 		t.IntMap = nil
 	case StringMap:
 		t.StringMap = nil
+	case String:
+		t.StringData = nil
 	}
 }
 
@@ -145,6 +156,8 @@ func (t *Tensor) Capacity() int {
 		return len(t.IntMap)
 	case StringMap:
 		return len(t.StringMap)
+	case String:
+		return len(t.StringData)
 	}
 	return 0
 }
@@ -167,6 +180,8 @@ func (t *Tensor) Alloc() {
 		t.IntMap = make([]map[int]float32, t.Shape[0])
 	case StringMap:
 		t.StringMap = make([]map[string]float32, t.Shape[0])
+	case String:
+		t.StringData = make([][]byte, capacity)
 	}
 }
 
@@ -218,6 +233,8 @@ func (t *Tensor) print1D(s *strings.Builder) {
 			fmt.Fprintf(s, "%v", t.IntMap[i])
 		case StringMap:
 			fmt.Fprintf(s, "%v", t.StringMap[i])
+		case String:
+			s.WriteString(string(t.StringData[i]))
 		}
 		if i < t.Shape[0]-1 {
 			if t.DType == IntMap || t.DType == StringMap {
@@ -252,6 +269,8 @@ func (t *Tensor) print2D(s *strings.Builder) {
 				fmt.Fprintf(s, "%d", t.Int64Data[i*m+j])
 			case Double:
 				fmt.Fprintf(s, "%f", t.DoubleData[i*m+j])
+			case String:
+				s.WriteString(string(t.StringData[i*m+j]))
 			}
 			if j < m-1 {
 				s.WriteString(", ")
@@ -273,6 +292,8 @@ func OnnxTypeToDtype(elemType int32) DataType {
 		return Int64
 	case "DOUBLE":
 		return Double
+	case "STRING":
+		return String
 	default:
 		log.Printf("onnx type %s has not been defined.\n", elemTypeStr)
 		return Undefined
@@ -305,6 +326,10 @@ func  FromTensorProto(Tp *ir.TensorProto) (*Tensor, error) {
 	case "DOUBLE":
 		t.DoubleData = Tp.DoubleData
 		t.DType = Double
+		return t, nil
+	case "STRING":
+		t.StringData = Tp.StringData
+		t.DType = String
 		return t, nil
 	default:
 		return nil, fmt.Errorf("tensor copy: unsupported data type %d", t.DType)

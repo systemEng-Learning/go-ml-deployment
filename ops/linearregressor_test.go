@@ -85,20 +85,20 @@ func TestLinearRegressorNoIntercept(t *testing.T) {
 func TestLinearRegressorInvalid(t *testing.T) {
 	model := loadModel(t, "linearreg_invalid.protojson")
 	graphProto := model.GetGraph()
-var g graph.Graph
-    var initErr error
+	var g graph.Graph
+	var initErr error
 
-    func() {
-        defer func() {
-            if r := recover(); r != nil {
-                initErr = fmt.Errorf("panic during Init: %v", r)
-            }
-        }()
-        g.Init(graphProto)
-    }()
+	func() {
+		defer func() {
+			if r := recover(); r != nil {
+				initErr = fmt.Errorf("panic during Init: %v", r)
+			}
+		}()
+		g.Init(graphProto)
+	}()
 
-    if initErr != nil {
-        t.Logf("Init failed (expected): %v", initErr)
-        return  
-    }
+	if initErr != nil {
+		t.Logf("Init failed (expected): %v", initErr)
+		return
+	}
 }

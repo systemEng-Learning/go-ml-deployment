@@ -9,10 +9,10 @@ import (
 )
 
 type LinearRegressor struct {
-	input             int
-	outputs 		 []int
-	coefficients      *tensor.Tensor
-	intercepts        *tensor.Tensor
+	input        int
+	outputs      []int
+	coefficients *tensor.Tensor
+	intercepts   *tensor.Tensor
 }
 
 func (l *LinearRegressor) Init(k *kernel.Kernel, node *ir.NodeProto) error {
@@ -50,7 +50,6 @@ func (l *LinearRegressor) Init(k *kernel.Kernel, node *ir.NodeProto) error {
 
 }
 
-
 func (l *LinearRegressor) Compute(k *kernel.Kernel) error {
 	data, err := k.Input(l.input)
 	if err != nil {
@@ -65,7 +64,6 @@ func (l *LinearRegressor) Compute(k *kernel.Kernel) error {
 	if len(input.Shape) == 1 {
 		input.Shape = []int{1, input.Shape[0]}
 	}
-
 
 	if l.intercepts == nil {
 		coeffLen := l.coefficients.Shape[0]

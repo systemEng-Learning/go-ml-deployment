@@ -90,6 +90,12 @@ func (t *TreeEnsemble) Init(node *ir.NodeProto) error {
 				return fmt.Errorf("failed to create tensor from base_values_as_tensor: %v", err)
 			}
 			t.Atts.base_values_as_tensor = base_tensor
+		case "nodes_nodeids":
+			t.Atts.nodes_nodeids = attr.Ints
+		case "nodes_treeids":
+			t.Atts.nodes_treeids = attr.Ints
+		case "nodes_featureids":
+			t.Atts.nodes_featureids = attr.Ints
 		case "nodes_values":
 			t.Atts.nodes_values = &tensor.Tensor{
 				Shape:     []int{len(attr.Floats)},
@@ -142,7 +148,7 @@ func (t *TreeEnsemble) Init(node *ir.NodeProto) error {
 			t.Atts.class_weights_as_tensor = class_weights_tensor
 		case "classlabels_strings":
 			t.Atts.classlabels_strings = attr.Strings
-		case "classlabels_ints":
+		case "classlabels_int64s":
 			t.Atts.classlabels_int64s = attr.Ints
 		case "post_transform":
 			t.Atts.post_transform = string(attr.S)

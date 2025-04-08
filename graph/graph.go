@@ -119,6 +119,10 @@ func (g *Graph) initializeNodes() error {
 			l := &ops.LinearRegressor{}
 			err = l.Init(g.kernel, node)
 			g.nodes = append(g.nodes, l)
+		case "TreeEnsembleClassifier":
+			t := &ops.TreeEnsembleClassifier{}
+			err = t.Init(g.kernel, node)
+			g.nodes = append(g.nodes, t)
 		default:
 			return fmt.Errorf("%s operation not supported", node.OpType)
 		}

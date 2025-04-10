@@ -2,7 +2,6 @@ package ops
 
 import (
 	"fmt"
-	"math"
 
 	"github.com/systemEng-Learning/go-ml-deployment/ir"
 	"github.com/systemEng-Learning/go-ml-deployment/kernel"
@@ -45,16 +44,21 @@ func (t *TreeEnsembleClassifier) Compute(k *kernel.Kernel) error {
 	input := data.Tensor
 
 	leave_index := t.tree.LeaveIndexTrees(input)
+	
+	
 	len_class_label_int64s := len(t.tree.Atts.classlabels_int64s)
 	len_class_label_strings := len(t.tree.Atts.classlabels_strings)
 
+	
+	
 	var n_classes int
 	if len_class_label_int64s > len_class_label_strings {
 		n_classes = len_class_label_int64s
 	} else {
 		n_classes = len_class_label_strings
 	}
-	n_samples := leave_index[0]
+	n_samples := leave_index.Shape[0]
+	
 	res, err := tensor.CreateEmptyTensor([]int{n_samples, n_classes}, tensor.Float)
 	if err != nil {
 		fmt.Errorf("error creating tensor: %v", err)
@@ -67,6 +71,8 @@ func (t *TreeEnsembleClassifier) Compute(k *kernel.Kernel) error {
 			copy(res.FloatData[i*n_classes:(i+1)*n_classes], baseValues)
 		}
 	}
+	
+
 
 	classIndex := make(map[TreeNodeKey][]int)
 	for i := 0; i < len(t.tree.Atts.class_treeids); i++ {
@@ -76,6 +82,8 @@ func (t *TreeEnsembleClassifier) Compute(k *kernel.Kernel) error {
 		classIndex[key] = append(classIndex[key], i)
 	}
 
+	
+	
 	var classWeights []float32
 	if t.tree.Atts.class_weights != nil {
 		classWeights = t.tree.Atts.class_weights.FloatData
@@ -86,11 +94,12 @@ func (t *TreeEnsembleClassifier) Compute(k *kernel.Kernel) error {
 	}
 
 	classIDs := t.tree.Atts.class_ids
-	numTrees := len(t.tree.TreeIds)
+	numTrees := leave_index.Shape[1]
+	
 	for i := 0; i < n_samples; i++ {
-		start := i * numTrees
+		start := i * leave_index.Shape[1]
 		end := start + numTrees
-		indices := leave_index[start:end]
+		indices := leave_index.Int64Data[start:end]
 		for _, idx := range indices {
 			treeID := t.tree.Atts.nodes_treeids[idx]
 			nodeID := t.tree.Atts.nodes_nodeids[idx]
@@ -132,35 +141,31 @@ func (t *TreeEnsembleClassifier) Compute(k *kernel.Kernel) error {
 		}
 	}
 
-	switch t.tree.Atts.post_transform {
-	case "LOGISITIC":
-		for i := range res.FloatData {
-			res.FloatData[i] = 1.0 / (1.0 + float32(math.Exp(-float64(res.FloatData[i]))))
-		}
-	case "SOFTMAX":
-		for i := 0; i < n_samples; i++ {
-			start := i * n_classes
-			end := start + n_classes
-			row := res.FloatData[start:end]
-			max := row[0]
-			for _, val := range row {
-				if val > max {
-					max = val
-				}
-			}
-			var sum float32
-			for j := range row {
-				row[j] = float32(math.Exp(float64(row[j] - max)))
-				sum += row[j]
-			}
-			for j := range row {
-				if sum != 0 {
-					row[j] /= sum
-				}
-			}
-		}
+	
 
+	switch t.tree.Atts.post_transform {
+		case "LOGISITIC":
+			err = res.LogisticInPlace()
+			if err != nil {
+				return fmt.Errorf("error applying logistic: %v", err)
+			}
+		case "SOFTMAX":
+			err = res.SoftmaxInPlace()
+			if err != nil {
+				return fmt.Errorf("error applying softmax: %v", err)
+			}
+		case "PROBIT":
+			err = res.ProbitInPlace()
+			if err != nil {
+				return fmt.Errorf("error applying probit: %v", err)
+			}
+		case "SOFTMAX_ZERO":
+			err = res.SoftmaxZeroInPlace()
+			if err != nil {
+				return fmt.Errorf("error applying softmax_zero: %v", err)
+			}
 	}
+	
 
 	var scoresTensor *tensor.Tensor
 	scoresTensor, err = k.Output(t.outputs[1], []int{n_samples, n_classes}, tensor.Float)

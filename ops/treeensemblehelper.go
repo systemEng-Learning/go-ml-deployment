@@ -257,24 +257,37 @@ func (t *TreeEnsemble) LeafIndexTree(X []float32, treeid int64) int {
 	return index
 }
 
-func (t *TreeEnsemble) LeaveIndexTrees(X *tensor.Tensor) []int {
+func (t *TreeEnsemble) LeaveIndexTrees(X *tensor.Tensor) *tensor.Tensor {
 	shape := X.Shape
 	if len(shape) == 1 {
 		shape = []int{1, shape[0]}
 	}
 	nSamples := shape[0]
 	nFeatures := shape[1]
-
-	outputs := make([]int, nSamples)
+	cols := 0
+	outputs := []int64{}
 	for i := 0; i < nSamples; i++ {
 		startIdx := i * nFeatures
 		endIdx := startIdx + nFeatures
 		rowData := X.FloatData[startIdx:endIdx]
-		leaves := make([]int, len(t.TreeIds))
-		for j, treeid := range t.TreeIds {
-			leaves[j] = t.LeafIndexTree(rowData, treeid)
+		leaves := []int64{}
+		for _, treeid := range t.TreeIds {
+			o := t.LeafIndexTree(rowData, treeid)
+			leaves = append(leaves, int64(o))
 		}
+
+		if cols == 0 {
+			cols = len(leaves)
+		}
+		cols = len(leaves)
+		
 		outputs = append(outputs, leaves...)
 	}
-	return outputs
+	
+	tensor_output := &tensor.Tensor{
+		Shape:     []int{nSamples, cols},
+		DType:     tensor.Int64,
+		Int64Data: outputs,
+	}
+	return tensor_output
 }

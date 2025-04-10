@@ -16,13 +16,13 @@ type Ops interface {
 }
 
 type Graph struct {
-	graph  *ir.GraphProto
-	inputs []int
-	shapes [][]int
-	dtypes []tensors.DataType
-	nodes  []Ops
-	output []int
-	kernel *kernel.Kernel
+	graph   *ir.GraphProto
+	inputs  []int
+	shapes  [][]int
+	dtypes  []tensors.DataType
+	nodes   []Ops
+	outputs []int
+	kernel  *kernel.Kernel
 }
 
 func (g *Graph) Init(graphProto *ir.GraphProto) {
@@ -134,28 +134,45 @@ func (g *Graph) initializeNodes() error {
 }
 
 func (g *Graph) setOutputIndices() error {
-	g.output = make([]int, len(g.graph.Output))
+	g.outputs = make([]int, len(g.graph.Output))
 	for i, o := range g.graph.Output {
 		index, err := g.kernel.RegisterReader(o.Name)
 		if err != nil {
 			return err
 		}
-		g.output[i] = index
+		g.outputs[i] = index
 	}
 	return nil
 }
 
-func (g *Graph) RunNodes() {
+func (g *Graph) RunNodes() error {
 	for _, node := range g.nodes {
 		err := node.Compute(g.kernel)
 		if err != nil {
-			panic(err)
+			return err
 		}
 	}
+	return nil
+}
+
+func (g *Graph) Execute(input []any) ([]any, error) {
+	err := g.setInputs(input)
+	if err != nil {
+		return nil, err
+	}
+
+	err = g.RunNodes()
+	if err != nil {
+		return nil, err
+	}
+
+	output := g.getOutputs()
+
+	return output, nil
 }
 
 func (g *Graph) Print() {
-	for _, o := range g.output {
+	for _, o := range g.outputs {
 		fmt.Println(g.kernel.Get(o))
 	}
 }

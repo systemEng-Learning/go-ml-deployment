@@ -130,15 +130,23 @@ func (t *TreeEnsembleClassifier) Compute(k *kernel.Kernel) error {
 				return fmt.Errorf("error creating tensor: %v", err)
 			}
 			for i := 0; i < n_samples; i++ {
-				newRes.FloatData[i*2] = res.FloatData[i]
-				if t.tree.Atts.post_transform == "NONE" || t.tree.Atts.post_transform == "" || t.tree.Atts.post_transform == "PROBIT" {
-					newRes.FloatData[i*2] = 1 - newRes.FloatData[i*2+1]
-				} else {
-					newRes.FloatData[i*2] = -newRes.FloatData[i*2+1]
-				}
-
+				newRes.FloatData[i*2+1] = res.FloatData[i*n_classes]
+			}
+			copy(res.FloatData, newRes.FloatData)
+		} else {
+			for i := 0; i < n_samples; i++ {
+				res.FloatData[i*n_classes+1] = res.FloatData[i*n_classes]
 			}
 		}
+
+		for i := 0; i < n_samples; i++ {
+			 if t.tree.Atts.post_transform == "NONE" || t.tree.Atts.post_transform == "" || t.tree.Atts.post_transform == "PROBIT" {
+				res.FloatData[i*n_classes] = 1 - res.FloatData[i*n_classes+1]
+			 } else {
+				res.FloatData[i*n_classes] = -res.FloatData[i*n_classes+1]
+			 }
+		}
+
 	}
 
 	

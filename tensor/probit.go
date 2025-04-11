@@ -28,7 +28,7 @@ func computeProbit(val float64) float64 {
 }
 
 func (t *Tensor) ProbitInPlace() error {
-    if len(t.Shape) != 2 || t.DType != Float || t.DType != Double {
+    if len(t.Shape) != 2 || (t.DType != Float && t.DType != Double) {
         return errors.New("unsupported tensor shape or data type")
     }
 

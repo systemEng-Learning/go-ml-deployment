@@ -6,7 +6,7 @@ import (
 )
 
 func (t *Tensor) LogisticInPlace() error {
-	if len(t.Shape) != 2 || t.DType != Float || t.DType != Double {
+	if len(t.Shape) != 2 || (t.DType != Float && t.DType != Double) {
 		return errors.New("unsupported tensor shape or data type")
 	}
 

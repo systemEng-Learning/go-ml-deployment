@@ -6,7 +6,7 @@ import (
 )
 
 func (t *Tensor) SoftmaxInPlace() error {
-	if len(t.Shape) != 2 || t.DType != Double || t.DType != Float {
+	if len(t.Shape) != 2 || (t.DType != Double && t.DType != Float) {
 		return errors.ErrUnsupported
 	}
 

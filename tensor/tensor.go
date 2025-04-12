@@ -119,7 +119,7 @@ func Create1DDoubleTensorFromFloat(data []float32) *Tensor {
 		FloatData: data,
 		DType:     Float,
 	}
-	t.castFloattoDouble()
+	t.Cast(Double)
 	return t
 }
 

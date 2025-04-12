@@ -9,6 +9,10 @@ type Numeric interface {
 	int32 | int64 | float32 | float64
 }
 
+type addKey struct {
+	from1, from2, out DataType
+}
+
 func (t *Tensor) Add(other *Tensor, out *Tensor) (*Tensor, error) {
 	// Cannot add maps
 	if t.DType == IntMap || t.DType == StringMap || other.DType == IntMap || other.DType == StringMap {
@@ -68,33 +72,206 @@ func (t *Tensor) Add(other *Tensor, out *Tensor) (*Tensor, error) {
 	return nil, fmt.Errorf("cannot add the 2 tensors shapes do not align %v != %v", t.Shape, other.Shape)
 }
 
+type opAddFunc func(a, b, out any, length int)
+
+var opAddDispatch = map[addKey]opAddFunc{
+	{Float, Float, Float}: func(a, b, out any, l int) {
+		OpAdd(a.([]float32), b.([]float32), out.([]float32), l)
+	},
+	{Float, Float, Double}: func(a, b, out any, l int) {
+		OpAdd(a.([]float32), b.([]float32), out.([]float64), l)
+	},
+	{Float, Float, Int32}: func(a, b, out any, l int) {
+		OpAdd(a.([]float32), b.([]float32), out.([]int32), l)
+	},
+	{Float, Float, Int64}: func(a, b, out any, l int) {
+		OpAdd(a.([]float32), b.([]float32), out.([]int64), l)
+	},
+	{Float, Double, Float}: func(a, b, out any, l int) {
+		OpAdd(a.([]float32), b.([]float64), out.([]float32), l)
+	},
+	{Float, Double, Double}: func(a, b, out any, l int) {
+		OpAdd(a.([]float32), b.([]float64), out.([]float64), l)
+	},
+	{Float, Double, Int32}: func(a, b, out any, l int) {
+		OpAdd(a.([]float32), b.([]float64), out.([]int32), l)
+	},
+	{Float, Double, Int64}: func(a, b, out any, l int) {
+		OpAdd(a.([]float32), b.([]float64), out.([]int64), l)
+	},
+	{Float, Int32, Float}: func(a, b, out any, l int) {
+		OpAdd(a.([]float32), b.([]int32), out.([]float32), l)
+	},
+	{Float, Int32, Double}: func(a, b, out any, l int) {
+		OpAdd(a.([]float32), b.([]int32), out.([]float64), l)
+	},
+	{Float, Int32, Int32}: func(a, b, out any, l int) {
+		OpAdd(a.([]float32), b.([]int32), out.([]int32), l)
+	},
+	{Float, Int32, Int64}: func(a, b, out any, l int) {
+		OpAdd(a.([]float32), b.([]int32), out.([]int64), l)
+	},
+	{Float, Int64, Float}: func(a, b, out any, l int) {
+		OpAdd(a.([]float32), b.([]int64), out.([]float32), l)
+	},
+	{Float, Int64, Double}: func(a, b, out any, l int) {
+		OpAdd(a.([]float32), b.([]int64), out.([]float64), l)
+	},
+	{Float, Int64, Int32}: func(a, b, out any, l int) {
+		OpAdd(a.([]float32), b.([]int64), out.([]int32), l)
+	},
+	{Float, Int64, Int64}: func(a, b, out any, l int) {
+		OpAdd(a.([]float32), b.([]int64), out.([]int64), l)
+	},
+	{Double, Float, Float}: func(a, b, out any, l int) {
+		OpAdd(a.([]float64), b.([]float32), out.([]float32), l)
+	},
+	{Double, Float, Double}: func(a, b, out any, l int) {
+		OpAdd(a.([]float64), b.([]float32), out.([]float64), l)
+	},
+	{Double, Float, Int32}: func(a, b, out any, l int) {
+		OpAdd(a.([]float64), b.([]float32), out.([]int32), l)
+	},
+	{Double, Float, Int64}: func(a, b, out any, l int) {
+		OpAdd(a.([]float64), b.([]float32), out.([]int64), l)
+	},
+	{Double, Double, Float}: func(a, b, out any, l int) {
+		OpAdd(a.([]float64), b.([]float64), out.([]float32), l)
+	},
+	{Double, Double, Double}: func(a, b, out any, l int) {
+		OpAdd(a.([]float64), b.([]float64), out.([]float64), l)
+	},
+	{Double, Double, Int32}: func(a, b, out any, l int) {
+		OpAdd(a.([]float64), b.([]float64), out.([]int32), l)
+	},
+	{Double, Double, Int64}: func(a, b, out any, l int) {
+		OpAdd(a.([]float64), b.([]float64), out.([]int64), l)
+	},
+	{Double, Int32, Float}: func(a, b, out any, l int) {
+		OpAdd(a.([]float64), b.([]int32), out.([]float32), l)
+	},
+	{Double, Int32, Double}: func(a, b, out any, l int) {
+		OpAdd(a.([]float64), b.([]int32), out.([]float64), l)
+	},
+	{Double, Int32, Int32}: func(a, b, out any, l int) {
+		OpAdd(a.([]float64), b.([]int32), out.([]int32), l)
+	},
+	{Double, Int32, Int64}: func(a, b, out any, l int) {
+		OpAdd(a.([]float64), b.([]int32), out.([]int64), l)
+	},
+	{Double, Int64, Float}: func(a, b, out any, l int) {
+		OpAdd(a.([]float64), b.([]int64), out.([]float32), l)
+	},
+	{Double, Int64, Double}: func(a, b, out any, l int) {
+		OpAdd(a.([]float64), b.([]int64), out.([]float64), l)
+	},
+	{Double, Int64, Int32}: func(a, b, out any, l int) {
+		OpAdd(a.([]float64), b.([]int64), out.([]int32), l)
+	},
+	{Double, Int64, Int64}: func(a, b, out any, l int) {
+		OpAdd(a.([]float64), b.([]int64), out.([]int64), l)
+	},
+	{Int32, Float, Float}: func(a, b, out any, l int) {
+		OpAdd(a.([]int32), b.([]float32), out.([]float32), l)
+	},
+	{Int32, Float, Double}: func(a, b, out any, l int) {
+		OpAdd(a.([]int32), b.([]float32), out.([]float64), l)
+	},
+	{Int32, Float, Int32}: func(a, b, out any, l int) {
+		OpAdd(a.([]int32), b.([]float32), out.([]int32), l)
+	},
+	{Int32, Float, Int64}: func(a, b, out any, l int) {
+		OpAdd(a.([]int32), b.([]float32), out.([]int64), l)
+	},
+	{Int32, Double, Float}: func(a, b, out any, l int) {
+		OpAdd(a.([]int32), b.([]float64), out.([]float32), l)
+	},
+	{Int32, Double, Double}: func(a, b, out any, l int) {
+		OpAdd(a.([]int32), b.([]float64), out.([]float64), l)
+	},
+	{Int32, Double, Int32}: func(a, b, out any, l int) {
+		OpAdd(a.([]int32), b.([]float64), out.([]int32), l)
+	},
+	{Int32, Double, Int64}: func(a, b, out any, l int) {
+		OpAdd(a.([]int32), b.([]float64), out.([]int64), l)
+	},
+	{Int32, Int32, Float}: func(a, b, out any, l int) {
+		OpAdd(a.([]int32), b.([]int32), out.([]float32), l)
+	},
+	{Int32, Int32, Double}: func(a, b, out any, l int) {
+		OpAdd(a.([]int32), b.([]int32), out.([]float64), l)
+	},
+	{Int32, Int32, Int32}: func(a, b, out any, l int) {
+		OpAdd(a.([]int32), b.([]int32), out.([]int32), l)
+	},
+	{Int32, Int32, Int64}: func(a, b, out any, l int) {
+		OpAdd(a.([]int32), b.([]int32), out.([]int64), l)
+	},
+	{Int32, Int64, Float}: func(a, b, out any, l int) {
+		OpAdd(a.([]int32), b.([]int64), out.([]float32), l)
+	},
+	{Int32, Int64, Double}: func(a, b, out any, l int) {
+		OpAdd(a.([]int32), b.([]int64), out.([]float64), l)
+	},
+	{Int32, Int64, Int32}: func(a, b, out any, l int) {
+		OpAdd(a.([]int32), b.([]int64), out.([]int32), l)
+	},
+	{Int32, Int64, Int64}: func(a, b, out any, l int) {
+		OpAdd(a.([]int32), b.([]int64), out.([]int64), l)
+	},
+	{Int64, Float, Float}: func(a, b, out any, l int) {
+		OpAdd(a.([]int64), b.([]float32), out.([]float32), l)
+	},
+	{Int64, Float, Double}: func(a, b, out any, l int) {
+		OpAdd(a.([]int64), b.([]float32), out.([]float64), l)
+	},
+	{Int64, Float, Int32}: func(a, b, out any, l int) {
+		OpAdd(a.([]int64), b.([]float32), out.([]int32), l)
+	},
+	{Int64, Float, Int64}: func(a, b, out any, l int) {
+		OpAdd(a.([]int64), b.([]float32), out.([]int64), l)
+	},
+	{Int64, Double, Float}: func(a, b, out any, l int) {
+		OpAdd(a.([]int64), b.([]float64), out.([]float32), l)
+	},
+	{Int64, Double, Double}: func(a, b, out any, l int) {
+		OpAdd(a.([]int64), b.([]float64), out.([]float64), l)
+	},
+	{Int64, Double, Int32}: func(a, b, out any, l int) {
+		OpAdd(a.([]int64), b.([]float64), out.([]int32), l)
+	},
+	{Int64, Double, Int64}: func(a, b, out any, l int) {
+		OpAdd(a.([]int64), b.([]float64), out.([]int64), l)
+	},
+	{Int64, Int32, Float}: func(a, b, out any, l int) {
+		OpAdd(a.([]int64), b.([]int32), out.([]float32), l)
+	},
+	{Int64, Int32, Double}: func(a, b, out any, l int) {
+		OpAdd(a.([]int64), b.([]int32), out.([]float64), l)
+	},
+	{Int64, Int32, Int32}: func(a, b, out any, l int) {
+		OpAdd(a.([]int64), b.([]int32), out.([]int32), l)
+	},
+	{Int64, Int32, Int64}: func(a, b, out any, l int) {
+		OpAdd(a.([]int64), b.([]int32), out.([]int64), l)
+	},
+	{Int64, Int64, Float}: func(a, b, out any, l int) {
+		OpAdd(a.([]int64), b.([]int64), out.([]float32), l)
+	},
+	{Int64, Int64, Double}: func(a, b, out any, l int) {
+		OpAdd(a.([]int64), b.([]int64), out.([]float64), l)
+	},
+	{Int64, Int64, Int32}: func(a, b, out any, l int) {
+		OpAdd(a.([]int64), b.([]int64), out.([]int32), l)
+	},
+	{Int64, Int64, Int64}: func(a, b, out any, l int) {
+		OpAdd(a.([]int64), b.([]int64), out.([]int64), l)
+	},
+}
+
 func OpAdd[T Numeric, U Numeric, V Numeric](first []T, second []U, result []V, length int) {
 	for i := range length {
 		result[i] = V(first[i]) + V(second[i])
-	}
-}
-
-func ElemAdd[T Numeric, U Numeric, V Numeric](first []T, second U, result []V, length int) {
-	elem := V(second)
-	for i := range length {
-		result[i] = V(first[i]) + elem
-	}
-}
-
-func RowAdd[T Numeric, U Numeric, V Numeric](first []T, row []U, result []V, shape []int) {
-	for i := range shape[0] {
-		for j := range shape[1] {
-			result[i*shape[1]+j] = V(first[i*shape[1]+j]) + V(row[j])
-		}
-	}
-}
-
-func ColAdd[T Numeric, U Numeric, V Numeric](first []T, col []U, result []V, shape []int) {
-	for i := range shape[0] {
-		elem := V(col[i])
-		for j := range shape[1] {
-			result[i*shape[1]+j] = V(first[i*shape[1]+j]) + elem
-		}
 	}
 }
 
@@ -102,188 +279,222 @@ func (t *Tensor) sameShapeAdd(other *Tensor, out *Tensor) (*Tensor, error) {
 	if out == nil {
 		out = createOutputTensor(t.DType, other.DType, t.Shape)
 	}
+
 	length := t.Shape[0]
 	if len(t.Shape) == 2 {
 		length *= t.Shape[1]
 	}
-	if t.DType == Float && other.DType == Float {
-		switch out.DType {
-		case Float:
-			OpAdd(t.FloatData, other.FloatData, out.FloatData, length)
-		case Double:
-			OpAdd(t.FloatData, other.FloatData, out.DoubleData, length)
-		case Int32:
-			OpAdd(t.FloatData, other.FloatData, out.Int32Data, length)
-		case Int64:
-			OpAdd(t.FloatData, other.FloatData, out.Int64Data, length)
-		}
-	} else if t.DType == Float && other.DType == Double {
-		switch out.DType {
-		case Float:
-			OpAdd(t.FloatData, other.DoubleData, out.FloatData, length)
-		case Double:
-			OpAdd(t.FloatData, other.DoubleData, out.DoubleData, length)
-		case Int32:
-			OpAdd(t.FloatData, other.DoubleData, out.Int32Data, length)
-		case Int64:
-			OpAdd(t.FloatData, other.DoubleData, out.Int64Data, length)
-		}
-	} else if t.DType == Float && other.DType == Int32 {
-		switch out.DType {
-		case Float:
-			OpAdd(t.FloatData, other.Int32Data, out.FloatData, length)
-		case Double:
-			OpAdd(t.FloatData, other.Int32Data, out.DoubleData, length)
-		case Int32:
-			OpAdd(t.FloatData, other.Int32Data, out.Int32Data, length)
-		case Int64:
-			OpAdd(t.FloatData, other.Int32Data, out.Int64Data, length)
-		}
-	} else if t.DType == Float && other.DType == Int64 {
-		switch out.DType {
-		case Float:
-			OpAdd(t.FloatData, other.Int64Data, out.FloatData, length)
-		case Double:
-			OpAdd(t.FloatData, other.Int64Data, out.DoubleData, length)
-		case Int32:
-			OpAdd(t.FloatData, other.Int64Data, out.Int32Data, length)
-		case Int64:
-			OpAdd(t.FloatData, other.Int64Data, out.Int64Data, length)
-		}
-	} else if t.DType == Double && other.DType == Float {
-		switch out.DType {
-		case Float:
-			OpAdd(t.DoubleData, other.FloatData, out.FloatData, length)
-		case Double:
-			OpAdd(t.DoubleData, other.FloatData, out.DoubleData, length)
-		case Int32:
-			OpAdd(t.DoubleData, other.FloatData, out.Int32Data, length)
-		case Int64:
-			OpAdd(t.DoubleData, other.FloatData, out.Int64Data, length)
-		}
-	} else if t.DType == Double && other.DType == Double {
-		switch out.DType {
-		case Float:
-			OpAdd(t.DoubleData, other.DoubleData, out.FloatData, length)
-		case Double:
-			OpAdd(t.DoubleData, other.DoubleData, out.DoubleData, length)
-		case Int32:
-			OpAdd(t.DoubleData, other.DoubleData, out.Int32Data, length)
-		case Int64:
-			OpAdd(t.DoubleData, other.DoubleData, out.Int64Data, length)
-		}
-	} else if t.DType == Double && other.DType == Int32 {
-		switch out.DType {
-		case Float:
-			OpAdd(t.DoubleData, other.Int32Data, out.FloatData, length)
-		case Double:
-			OpAdd(t.DoubleData, other.Int32Data, out.DoubleData, length)
-		case Int32:
-			OpAdd(t.DoubleData, other.Int32Data, out.Int32Data, length)
-		case Int64:
-			OpAdd(t.DoubleData, other.Int32Data, out.Int64Data, length)
-		}
-	} else if t.DType == Double && other.DType == Int64 {
-		switch out.DType {
-		case Float:
-			OpAdd(t.DoubleData, other.Int64Data, out.FloatData, length)
-		case Double:
-			OpAdd(t.DoubleData, other.Int64Data, out.DoubleData, length)
-		case Int32:
-			OpAdd(t.DoubleData, other.Int64Data, out.Int32Data, length)
-		case Int64:
-			OpAdd(t.DoubleData, other.Int64Data, out.Int64Data, length)
-		}
-	} else if t.DType == Int32 && other.DType == Float {
-		switch out.DType {
-		case Float:
-			OpAdd(t.Int32Data, other.FloatData, out.FloatData, length)
-		case Double:
-			OpAdd(t.Int32Data, other.FloatData, out.DoubleData, length)
-		case Int32:
-			OpAdd(t.Int32Data, other.FloatData, out.Int32Data, length)
-		case Int64:
-			OpAdd(t.Int32Data, other.FloatData, out.Int64Data, length)
-		}
-	} else if t.DType == Int32 && other.DType == Double {
-		switch out.DType {
-		case Float:
-			OpAdd(t.Int32Data, other.DoubleData, out.FloatData, length)
-		case Double:
-			OpAdd(t.Int32Data, other.DoubleData, out.DoubleData, length)
-		case Int32:
-			OpAdd(t.Int32Data, other.DoubleData, out.Int32Data, length)
-		case Int64:
-			OpAdd(t.Int32Data, other.DoubleData, out.Int64Data, length)
-		}
-	} else if t.DType == Int32 && other.DType == Int32 {
-		switch out.DType {
-		case Float:
-			OpAdd(t.Int32Data, other.Int32Data, out.FloatData, length)
-		case Double:
-			OpAdd(t.Int32Data, other.Int32Data, out.DoubleData, length)
-		case Int32:
-			OpAdd(t.Int32Data, other.Int32Data, out.Int32Data, length)
-		case Int64:
-			OpAdd(t.Int32Data, other.Int32Data, out.Int64Data, length)
-		}
-	} else if t.DType == Int32 && other.DType == Int64 {
-		switch out.DType {
-		case Float:
-			OpAdd(t.Int32Data, other.Int64Data, out.FloatData, length)
-		case Double:
-			OpAdd(t.Int32Data, other.Int64Data, out.DoubleData, length)
-		case Int32:
-			OpAdd(t.Int32Data, other.Int64Data, out.Int32Data, length)
-		case Int64:
-			OpAdd(t.Int32Data, other.Int64Data, out.Int64Data, length)
-		}
-	} else if t.DType == Int64 && other.DType == Float {
-		switch out.DType {
-		case Float:
-			OpAdd(t.Int64Data, other.FloatData, out.FloatData, length)
-		case Double:
-			OpAdd(t.Int64Data, other.FloatData, out.DoubleData, length)
-		case Int32:
-			OpAdd(t.Int64Data, other.FloatData, out.Int32Data, length)
-		case Int64:
-			OpAdd(t.Int64Data, other.FloatData, out.Int64Data, length)
-		}
-	} else if t.DType == Int64 && other.DType == Double {
-		switch out.DType {
-		case Float:
-			OpAdd(t.Int64Data, other.DoubleData, out.FloatData, length)
-		case Double:
-			OpAdd(t.Int64Data, other.DoubleData, out.DoubleData, length)
-		case Int32:
-			OpAdd(t.Int64Data, other.DoubleData, out.Int32Data, length)
-		case Int64:
-			OpAdd(t.Int64Data, other.DoubleData, out.Int64Data, length)
-		}
-	} else if t.DType == Int64 && other.DType == Int32 {
-		switch out.DType {
-		case Float:
-			OpAdd(t.Int64Data, other.Int32Data, out.FloatData, length)
-		case Double:
-			OpAdd(t.Int64Data, other.Int32Data, out.DoubleData, length)
-		case Int32:
-			OpAdd(t.Int64Data, other.Int32Data, out.Int32Data, length)
-		case Int64:
-			OpAdd(t.Int64Data, other.Int32Data, out.Int64Data, length)
-		}
-	} else if t.DType == Int64 && other.DType == Int64 {
-		switch out.DType {
-		case Float:
-			OpAdd(t.Int64Data, other.Int64Data, out.FloatData, length)
-		case Double:
-			OpAdd(t.Int64Data, other.Int64Data, out.DoubleData, length)
-		case Int32:
-			OpAdd(t.Int64Data, other.Int64Data, out.Int32Data, length)
-		case Int64:
-			OpAdd(t.Int64Data, other.Int64Data, out.Int64Data, length)
-		}
+
+	key := addKey{t.DType, other.DType, out.DType}
+	fn, ok := opAddDispatch[key]
+	if !ok {
+		return nil, fmt.Errorf("unsupported add combination: %v + %v -> %v", t.DType, other.DType, out.DType)
 	}
+
+	fn(t.rawData(), other.rawData(), out.rawData(), length)
 	return out, nil
+}
+
+var elemAddDispatch = map[addKey]opAddFunc{
+	{Float, Float, Float}: func(a, b, out any, l int) {
+		ElemAdd(a.([]float32), b.([]float32)[0], out.([]float32), l)
+	},
+	{Float, Float, Double}: func(a, b, out any, l int) {
+		ElemAdd(a.([]float32), b.([]float32)[0], out.([]float64), l)
+	},
+	{Float, Float, Int32}: func(a, b, out any, l int) {
+		ElemAdd(a.([]float32), b.([]float32)[0], out.([]int32), l)
+	},
+	{Float, Float, Int64}: func(a, b, out any, l int) {
+		ElemAdd(a.([]float32), b.([]float32)[0], out.([]int64), l)
+	},
+	{Float, Double, Float}: func(a, b, out any, l int) {
+		ElemAdd(a.([]float32), b.([]float64)[0], out.([]float32), l)
+	},
+	{Float, Double, Double}: func(a, b, out any, l int) {
+		ElemAdd(a.([]float32), b.([]float64)[0], out.([]float64), l)
+	},
+	{Float, Double, Int32}: func(a, b, out any, l int) {
+		ElemAdd(a.([]float32), b.([]float64)[0], out.([]int32), l)
+	},
+	{Float, Double, Int64}: func(a, b, out any, l int) {
+		ElemAdd(a.([]float32), b.([]float64)[0], out.([]int64), l)
+	},
+	{Float, Int32, Float}: func(a, b, out any, l int) {
+		ElemAdd(a.([]float32), b.([]int32)[0], out.([]float32), l)
+	},
+	{Float, Int32, Double}: func(a, b, out any, l int) {
+		ElemAdd(a.([]float32), b.([]int32)[0], out.([]float64), l)
+	},
+	{Float, Int32, Int32}: func(a, b, out any, l int) {
+		ElemAdd(a.([]float32), b.([]int32)[0], out.([]int32), l)
+	},
+	{Float, Int32, Int64}: func(a, b, out any, l int) {
+		ElemAdd(a.([]float32), b.([]int32)[0], out.([]int64), l)
+	},
+	{Float, Int64, Float}: func(a, b, out any, l int) {
+		ElemAdd(a.([]float32), b.([]int64)[0], out.([]float32), l)
+	},
+	{Float, Int64, Double}: func(a, b, out any, l int) {
+		ElemAdd(a.([]float32), b.([]int64)[0], out.([]float64), l)
+	},
+	{Float, Int64, Int32}: func(a, b, out any, l int) {
+		ElemAdd(a.([]float32), b.([]int64)[0], out.([]int32), l)
+	},
+	{Float, Int64, Int64}: func(a, b, out any, l int) {
+		ElemAdd(a.([]float32), b.([]int64)[0], out.([]int64), l)
+	},
+	{Double, Float, Float}: func(a, b, out any, l int) {
+		ElemAdd(a.([]float64), b.([]float32)[0], out.([]float32), l)
+	},
+	{Double, Float, Double}: func(a, b, out any, l int) {
+		ElemAdd(a.([]float64), b.([]float32)[0], out.([]float64), l)
+	},
+	{Double, Float, Int32}: func(a, b, out any, l int) {
+		ElemAdd(a.([]float64), b.([]float32)[0], out.([]int32), l)
+	},
+	{Double, Float, Int64}: func(a, b, out any, l int) {
+		ElemAdd(a.([]float64), b.([]float32)[0], out.([]int64), l)
+	},
+	{Double, Double, Float}: func(a, b, out any, l int) {
+		ElemAdd(a.([]float64), b.([]float64)[0], out.([]float32), l)
+	},
+	{Double, Double, Double}: func(a, b, out any, l int) {
+		ElemAdd(a.([]float64), b.([]float64)[0], out.([]float64), l)
+	},
+	{Double, Double, Int32}: func(a, b, out any, l int) {
+		ElemAdd(a.([]float64), b.([]float64)[0], out.([]int32), l)
+	},
+	{Double, Double, Int64}: func(a, b, out any, l int) {
+		ElemAdd(a.([]float64), b.([]float64)[0], out.([]int64), l)
+	},
+	{Double, Int32, Float}: func(a, b, out any, l int) {
+		ElemAdd(a.([]float64), b.([]int32)[0], out.([]float32), l)
+	},
+	{Double, Int32, Double}: func(a, b, out any, l int) {
+		ElemAdd(a.([]float64), b.([]int32)[0], out.([]float64), l)
+	},
+	{Double, Int32, Int32}: func(a, b, out any, l int) {
+		ElemAdd(a.([]float64), b.([]int32)[0], out.([]int32), l)
+	},
+	{Double, Int32, Int64}: func(a, b, out any, l int) {
+		ElemAdd(a.([]float64), b.([]int32)[0], out.([]int64), l)
+	},
+	{Double, Int64, Float}: func(a, b, out any, l int) {
+		ElemAdd(a.([]float64), b.([]int64)[0], out.([]float32), l)
+	},
+	{Double, Int64, Double}: func(a, b, out any, l int) {
+		ElemAdd(a.([]float64), b.([]int64)[0], out.([]float64), l)
+	},
+	{Double, Int64, Int32}: func(a, b, out any, l int) {
+		ElemAdd(a.([]float64), b.([]int64)[0], out.([]int32), l)
+	},
+	{Double, Int64, Int64}: func(a, b, out any, l int) {
+		ElemAdd(a.([]float64), b.([]int64)[0], out.([]int64), l)
+	},
+	{Int32, Float, Float}: func(a, b, out any, l int) {
+		ElemAdd(a.([]int32), b.([]float32)[0], out.([]float32), l)
+	},
+	{Int32, Float, Double}: func(a, b, out any, l int) {
+		ElemAdd(a.([]int32), b.([]float32)[0], out.([]float64), l)
+	},
+	{Int32, Float, Int32}: func(a, b, out any, l int) {
+		ElemAdd(a.([]int32), b.([]float32)[0], out.([]int32), l)
+	},
+	{Int32, Float, Int64}: func(a, b, out any, l int) {
+		ElemAdd(a.([]int32), b.([]float32)[0], out.([]int64), l)
+	},
+	{Int32, Double, Float}: func(a, b, out any, l int) {
+		ElemAdd(a.([]int32), b.([]float64)[0], out.([]float32), l)
+	},
+	{Int32, Double, Double}: func(a, b, out any, l int) {
+		ElemAdd(a.([]int32), b.([]float64)[0], out.([]float64), l)
+	},
+	{Int32, Double, Int32}: func(a, b, out any, l int) {
+		ElemAdd(a.([]int32), b.([]float64)[0], out.([]int32), l)
+	},
+	{Int32, Double, Int64}: func(a, b, out any, l int) {
+		ElemAdd(a.([]int32), b.([]float64)[0], out.([]int64), l)
+	},
+	{Int32, Int32, Float}: func(a, b, out any, l int) {
+		ElemAdd(a.([]int32), b.([]int32)[0], out.([]float32), l)
+	},
+	{Int32, Int32, Double}: func(a, b, out any, l int) {
+		ElemAdd(a.([]int32), b.([]int32)[0], out.([]float64), l)
+	},
+	{Int32, Int32, Int32}: func(a, b, out any, l int) {
+		ElemAdd(a.([]int32), b.([]int32)[0], out.([]int32), l)
+	},
+	{Int32, Int32, Int64}: func(a, b, out any, l int) {
+		ElemAdd(a.([]int32), b.([]int32)[0], out.([]int64), l)
+	},
+	{Int32, Int64, Float}: func(a, b, out any, l int) {
+		ElemAdd(a.([]int32), b.([]int64)[0], out.([]float32), l)
+	},
+	{Int32, Int64, Double}: func(a, b, out any, l int) {
+		ElemAdd(a.([]int32), b.([]int64)[0], out.([]float64), l)
+	},
+	{Int32, Int64, Int32}: func(a, b, out any, l int) {
+		ElemAdd(a.([]int32), b.([]int64)[0], out.([]int32), l)
+	},
+	{Int32, Int64, Int64}: func(a, b, out any, l int) {
+		ElemAdd(a.([]int32), b.([]int64)[0], out.([]int64), l)
+	},
+	{Int64, Float, Float}: func(a, b, out any, l int) {
+		ElemAdd(a.([]int64), b.([]float32)[0], out.([]float32), l)
+	},
+	{Int64, Float, Double}: func(a, b, out any, l int) {
+		ElemAdd(a.([]int64), b.([]float32)[0], out.([]float64), l)
+	},
+	{Int64, Float, Int32}: func(a, b, out any, l int) {
+		ElemAdd(a.([]int64), b.([]float32)[0], out.([]int32), l)
+	},
+	{Int64, Float, Int64}: func(a, b, out any, l int) {
+		ElemAdd(a.([]int64), b.([]float32)[0], out.([]int64), l)
+	},
+	{Int64, Double, Float}: func(a, b, out any, l int) {
+		ElemAdd(a.([]int64), b.([]float64)[0], out.([]float32), l)
+	},
+	{Int64, Double, Double}: func(a, b, out any, l int) {
+		ElemAdd(a.([]int64), b.([]float64)[0], out.([]float64), l)
+	},
+	{Int64, Double, Int32}: func(a, b, out any, l int) {
+		ElemAdd(a.([]int64), b.([]float64)[0], out.([]int32), l)
+	},
+	{Int64, Double, Int64}: func(a, b, out any, l int) {
+		ElemAdd(a.([]int64), b.([]float64)[0], out.([]int64), l)
+	},
+	{Int64, Int32, Float}: func(a, b, out any, l int) {
+		ElemAdd(a.([]int64), b.([]int32)[0], out.([]float32), l)
+	},
+	{Int64, Int32, Double}: func(a, b, out any, l int) {
+		ElemAdd(a.([]int64), b.([]int32)[0], out.([]float64), l)
+	},
+	{Int64, Int32, Int32}: func(a, b, out any, l int) {
+		ElemAdd(a.([]int64), b.([]int32)[0], out.([]int32), l)
+	},
+	{Int64, Int32, Int64}: func(a, b, out any, l int) {
+		ElemAdd(a.([]int64), b.([]int32)[0], out.([]int64), l)
+	},
+	{Int64, Int64, Float}: func(a, b, out any, l int) {
+		ElemAdd(a.([]int64), b.([]int64)[0], out.([]float32), l)
+	},
+	{Int64, Int64, Double}: func(a, b, out any, l int) {
+		ElemAdd(a.([]int64), b.([]int64)[0], out.([]float64), l)
+	},
+	{Int64, Int64, Int32}: func(a, b, out any, l int) {
+		ElemAdd(a.([]int64), b.([]int64)[0], out.([]int32), l)
+	},
+	{Int64, Int64, Int64}: func(a, b, out any, l int) {
+		ElemAdd(a.([]int64), b.([]int64)[0], out.([]int64), l)
+	},
+}
+
+func ElemAdd[T Numeric, U Numeric, V Numeric](first []T, second U, result []V, length int) {
+	elem := V(second)
+	for i := range length {
+		result[i] = V(first[i]) + elem
+	}
 }
 
 func (t *Tensor) addElem(other *Tensor, out *Tensor) (*Tensor, error) {
@@ -294,184 +505,219 @@ func (t *Tensor) addElem(other *Tensor, out *Tensor) (*Tensor, error) {
 	if len(t.Shape) == 2 {
 		length *= t.Shape[1]
 	}
-	if t.DType == Float && other.DType == Float {
-		switch out.DType {
-		case Float:
-			ElemAdd(t.FloatData, other.FloatData[0], out.FloatData, length)
-		case Double:
-			ElemAdd(t.FloatData, other.FloatData[0], out.DoubleData, length)
-		case Int32:
-			ElemAdd(t.FloatData, other.FloatData[0], out.Int32Data, length)
-		case Int64:
-			ElemAdd(t.FloatData, other.FloatData[0], out.Int64Data, length)
-		}
-	} else if t.DType == Float && other.DType == Double {
-		switch out.DType {
-		case Float:
-			ElemAdd(t.FloatData, other.DoubleData[0], out.FloatData, length)
-		case Double:
-			ElemAdd(t.FloatData, other.DoubleData[0], out.DoubleData, length)
-		case Int32:
-			ElemAdd(t.FloatData, other.DoubleData[0], out.Int32Data, length)
-		case Int64:
-			ElemAdd(t.FloatData, other.DoubleData[0], out.Int64Data, length)
-		}
-	} else if t.DType == Float && other.DType == Int32 {
-		switch out.DType {
-		case Float:
-			ElemAdd(t.FloatData, other.Int32Data[0], out.FloatData, length)
-		case Double:
-			ElemAdd(t.FloatData, other.Int32Data[0], out.DoubleData, length)
-		case Int32:
-			ElemAdd(t.FloatData, other.Int32Data[0], out.Int32Data, length)
-		case Int64:
-			ElemAdd(t.FloatData, other.Int32Data[0], out.Int64Data, length)
-		}
-	} else if t.DType == Float && other.DType == Int64 {
-		switch out.DType {
-		case Float:
-			ElemAdd(t.FloatData, other.Int64Data[0], out.FloatData, length)
-		case Double:
-			ElemAdd(t.FloatData, other.Int64Data[0], out.DoubleData, length)
-		case Int32:
-			ElemAdd(t.FloatData, other.Int64Data[0], out.Int32Data, length)
-		case Int64:
-			ElemAdd(t.FloatData, other.Int64Data[0], out.Int64Data, length)
-		}
-	} else if t.DType == Double && other.DType == Float {
-		switch out.DType {
-		case Float:
-			ElemAdd(t.DoubleData, other.FloatData[0], out.FloatData, length)
-		case Double:
-			ElemAdd(t.DoubleData, other.FloatData[0], out.DoubleData, length)
-		case Int32:
-			ElemAdd(t.DoubleData, other.FloatData[0], out.Int32Data, length)
-		case Int64:
-			ElemAdd(t.DoubleData, other.FloatData[0], out.Int64Data, length)
-		}
-	} else if t.DType == Double && other.DType == Double {
-		switch out.DType {
-		case Float:
-			ElemAdd(t.DoubleData, other.DoubleData[0], out.FloatData, length)
-		case Double:
-			ElemAdd(t.DoubleData, other.DoubleData[0], out.DoubleData, length)
-		case Int32:
-			ElemAdd(t.DoubleData, other.DoubleData[0], out.Int32Data, length)
-		case Int64:
-			ElemAdd(t.DoubleData, other.DoubleData[0], out.Int64Data, length)
-		}
-	} else if t.DType == Double && other.DType == Int32 {
-		switch out.DType {
-		case Float:
-			ElemAdd(t.DoubleData, other.Int32Data[0], out.FloatData, length)
-		case Double:
-			ElemAdd(t.DoubleData, other.Int32Data[0], out.DoubleData, length)
-		case Int32:
-			ElemAdd(t.DoubleData, other.Int32Data[0], out.Int32Data, length)
-		case Int64:
-			ElemAdd(t.DoubleData, other.Int32Data[0], out.Int64Data, length)
-		}
-	} else if t.DType == Double && other.DType == Int64 {
-		switch out.DType {
-		case Float:
-			ElemAdd(t.DoubleData, other.Int64Data[0], out.FloatData, length)
-		case Double:
-			ElemAdd(t.DoubleData, other.Int64Data[0], out.DoubleData, length)
-		case Int32:
-			ElemAdd(t.DoubleData, other.Int64Data[0], out.Int32Data, length)
-		case Int64:
-			ElemAdd(t.DoubleData, other.Int64Data[0], out.Int64Data, length)
-		}
-	} else if t.DType == Int32 && other.DType == Float {
-		switch out.DType {
-		case Float:
-			ElemAdd(t.Int32Data, other.FloatData[0], out.FloatData, length)
-		case Double:
-			ElemAdd(t.Int32Data, other.FloatData[0], out.DoubleData, length)
-		case Int32:
-			ElemAdd(t.Int32Data, other.FloatData[0], out.Int32Data, length)
-		case Int64:
-			ElemAdd(t.Int32Data, other.FloatData[0], out.Int64Data, length)
-		}
-	} else if t.DType == Int32 && other.DType == Double {
-		switch out.DType {
-		case Float:
-			ElemAdd(t.Int32Data, other.DoubleData[0], out.FloatData, length)
-		case Double:
-			ElemAdd(t.Int32Data, other.DoubleData[0], out.DoubleData, length)
-		case Int32:
-			ElemAdd(t.Int32Data, other.DoubleData[0], out.Int32Data, length)
-		case Int64:
-			ElemAdd(t.Int32Data, other.DoubleData[0], out.Int64Data, length)
-		}
-	} else if t.DType == Int32 && other.DType == Int32 {
-		switch out.DType {
-		case Float:
-			ElemAdd(t.Int32Data, other.Int32Data[0], out.FloatData, length)
-		case Double:
-			ElemAdd(t.Int32Data, other.Int32Data[0], out.DoubleData, length)
-		case Int32:
-			ElemAdd(t.Int32Data, other.Int32Data[0], out.Int32Data, length)
-		case Int64:
-			ElemAdd(t.Int32Data, other.Int32Data[0], out.Int64Data, length)
-		}
-	} else if t.DType == Int32 && other.DType == Int64 {
-		switch out.DType {
-		case Float:
-			ElemAdd(t.Int32Data, other.Int64Data[0], out.FloatData, length)
-		case Double:
-			ElemAdd(t.Int32Data, other.Int64Data[0], out.DoubleData, length)
-		case Int32:
-			ElemAdd(t.Int32Data, other.Int64Data[0], out.Int32Data, length)
-		case Int64:
-			ElemAdd(t.Int32Data, other.Int64Data[0], out.Int64Data, length)
-		}
-	} else if t.DType == Int64 && other.DType == Float {
-		switch out.DType {
-		case Float:
-			ElemAdd(t.Int64Data, other.FloatData[0], out.FloatData, length)
-		case Double:
-			ElemAdd(t.Int64Data, other.FloatData[0], out.DoubleData, length)
-		case Int32:
-			ElemAdd(t.Int64Data, other.FloatData[0], out.Int32Data, length)
-		case Int64:
-			ElemAdd(t.Int64Data, other.FloatData[0], out.Int64Data, length)
-		}
-	} else if t.DType == Int64 && other.DType == Double {
-		switch out.DType {
-		case Float:
-			ElemAdd(t.Int64Data, other.DoubleData[0], out.FloatData, length)
-		case Double:
-			ElemAdd(t.Int64Data, other.DoubleData[0], out.DoubleData, length)
-		case Int32:
-			ElemAdd(t.Int64Data, other.DoubleData[0], out.Int32Data, length)
-		case Int64:
-			ElemAdd(t.Int64Data, other.DoubleData[0], out.Int64Data, length)
-		}
-	} else if t.DType == Int64 && other.DType == Int32 {
-		switch out.DType {
-		case Float:
-			ElemAdd(t.Int64Data, other.Int32Data[0], out.FloatData, length)
-		case Double:
-			ElemAdd(t.Int64Data, other.Int32Data[0], out.DoubleData, length)
-		case Int32:
-			ElemAdd(t.Int64Data, other.Int32Data[0], out.Int32Data, length)
-		case Int64:
-			ElemAdd(t.Int64Data, other.Int32Data[0], out.Int64Data, length)
-		}
-	} else if t.DType == Int64 && other.DType == Int64 {
-		switch out.DType {
-		case Float:
-			ElemAdd(t.Int64Data, other.Int64Data[0], out.FloatData, length)
-		case Double:
-			ElemAdd(t.Int64Data, other.Int64Data[0], out.DoubleData, length)
-		case Int32:
-			ElemAdd(t.Int64Data, other.Int64Data[0], out.Int32Data, length)
-		case Int64:
-			ElemAdd(t.Int64Data, other.Int64Data[0], out.Int64Data, length)
+
+	key := addKey{t.DType, other.DType, out.DType}
+	fn, ok := elemAddDispatch[key]
+	if !ok {
+		return nil, fmt.Errorf("unsupported add combination: %v + %v -> %v", t.DType, other.DType, out.DType)
+	}
+	fn(t.rawData(), other.rawData(), out.rawData(), length)
+	return out, nil
+}
+
+type vecAddFunc func(a, b, out any, shape []int)
+
+var rowAddDispatch = map[addKey]vecAddFunc{
+	{Float, Float, Float}: func(a, b, out any, shape []int) {
+		RowAdd(a.([]float32), b.([]float32), out.([]float32), shape)
+	},
+	{Float, Float, Double}: func(a, b, out any, shape []int) {
+		RowAdd(a.([]float32), b.([]float32), out.([]float64), shape)
+	},
+	{Float, Float, Int32}: func(a, b, out any, shape []int) {
+		RowAdd(a.([]float32), b.([]float32), out.([]int32), shape)
+	},
+	{Float, Float, Int64}: func(a, b, out any, shape []int) {
+		RowAdd(a.([]float32), b.([]float32), out.([]int64), shape)
+	},
+	{Float, Double, Float}: func(a, b, out any, shape []int) {
+		RowAdd(a.([]float32), b.([]float64), out.([]float32), shape)
+	},
+	{Float, Double, Double}: func(a, b, out any, shape []int) {
+		RowAdd(a.([]float32), b.([]float64), out.([]float64), shape)
+	},
+	{Float, Double, Int32}: func(a, b, out any, shape []int) {
+		RowAdd(a.([]float32), b.([]float64), out.([]int32), shape)
+	},
+	{Float, Double, Int64}: func(a, b, out any, shape []int) {
+		RowAdd(a.([]float32), b.([]float64), out.([]int64), shape)
+	},
+	{Float, Int32, Float}: func(a, b, out any, shape []int) {
+		RowAdd(a.([]float32), b.([]int32), out.([]float32), shape)
+	},
+	{Float, Int32, Double}: func(a, b, out any, shape []int) {
+		RowAdd(a.([]float32), b.([]int32), out.([]float64), shape)
+	},
+	{Float, Int32, Int32}: func(a, b, out any, shape []int) {
+		RowAdd(a.([]float32), b.([]int32), out.([]int32), shape)
+	},
+	{Float, Int32, Int64}: func(a, b, out any, shape []int) {
+		RowAdd(a.([]float32), b.([]int32), out.([]int64), shape)
+	},
+	{Float, Int64, Float}: func(a, b, out any, shape []int) {
+		RowAdd(a.([]float32), b.([]int64), out.([]float32), shape)
+	},
+	{Float, Int64, Double}: func(a, b, out any, shape []int) {
+		RowAdd(a.([]float32), b.([]int64), out.([]float64), shape)
+	},
+	{Float, Int64, Int32}: func(a, b, out any, shape []int) {
+		RowAdd(a.([]float32), b.([]int64), out.([]int32), shape)
+	},
+	{Float, Int64, Int64}: func(a, b, out any, shape []int) {
+		RowAdd(a.([]float32), b.([]int64), out.([]int64), shape)
+	},
+	{Double, Float, Float}: func(a, b, out any, shape []int) {
+		RowAdd(a.([]float64), b.([]float32), out.([]float32), shape)
+	},
+	{Double, Float, Double}: func(a, b, out any, shape []int) {
+		RowAdd(a.([]float64), b.([]float32), out.([]float64), shape)
+	},
+	{Double, Float, Int32}: func(a, b, out any, shape []int) {
+		RowAdd(a.([]float64), b.([]float32), out.([]int32), shape)
+	},
+	{Double, Float, Int64}: func(a, b, out any, shape []int) {
+		RowAdd(a.([]float64), b.([]float32), out.([]int64), shape)
+	},
+	{Double, Double, Float}: func(a, b, out any, shape []int) {
+		RowAdd(a.([]float64), b.([]float64), out.([]float32), shape)
+	},
+	{Double, Double, Double}: func(a, b, out any, shape []int) {
+		RowAdd(a.([]float64), b.([]float64), out.([]float64), shape)
+	},
+	{Double, Double, Int32}: func(a, b, out any, shape []int) {
+		RowAdd(a.([]float64), b.([]float64), out.([]int32), shape)
+	},
+	{Double, Double, Int64}: func(a, b, out any, shape []int) {
+		RowAdd(a.([]float64), b.([]float64), out.([]int64), shape)
+	},
+	{Double, Int32, Float}: func(a, b, out any, shape []int) {
+		RowAdd(a.([]float64), b.([]int32), out.([]float32), shape)
+	},
+	{Double, Int32, Double}: func(a, b, out any, shape []int) {
+		RowAdd(a.([]float64), b.([]int32), out.([]float64), shape)
+	},
+	{Double, Int32, Int32}: func(a, b, out any, shape []int) {
+		RowAdd(a.([]float64), b.([]int32), out.([]int32), shape)
+	},
+	{Double, Int32, Int64}: func(a, b, out any, shape []int) {
+		RowAdd(a.([]float64), b.([]int32), out.([]int64), shape)
+	},
+	{Double, Int64, Float}: func(a, b, out any, shape []int) {
+		RowAdd(a.([]float64), b.([]int64), out.([]float32), shape)
+	},
+	{Double, Int64, Double}: func(a, b, out any, shape []int) {
+		RowAdd(a.([]float64), b.([]int64), out.([]float64), shape)
+	},
+	{Double, Int64, Int32}: func(a, b, out any, shape []int) {
+		RowAdd(a.([]float64), b.([]int64), out.([]int32), shape)
+	},
+	{Double, Int64, Int64}: func(a, b, out any, shape []int) {
+		RowAdd(a.([]float64), b.([]int64), out.([]int64), shape)
+	},
+	{Int32, Float, Float}: func(a, b, out any, shape []int) {
+		RowAdd(a.([]int32), b.([]float32), out.([]float32), shape)
+	},
+	{Int32, Float, Double}: func(a, b, out any, shape []int) {
+		RowAdd(a.([]int32), b.([]float32), out.([]float64), shape)
+	},
+	{Int32, Float, Int32}: func(a, b, out any, shape []int) {
+		RowAdd(a.([]int32), b.([]float32), out.([]int32), shape)
+	},
+	{Int32, Float, Int64}: func(a, b, out any, shape []int) {
+		RowAdd(a.([]int32), b.([]float32), out.([]int64), shape)
+	},
+	{Int32, Double, Float}: func(a, b, out any, shape []int) {
+		RowAdd(a.([]int32), b.([]float64), out.([]float32), shape)
+	},
+	{Int32, Double, Double}: func(a, b, out any, shape []int) {
+		RowAdd(a.([]int32), b.([]float64), out.([]float64), shape)
+	},
+	{Int32, Double, Int32}: func(a, b, out any, shape []int) {
+		RowAdd(a.([]int32), b.([]float64), out.([]int32), shape)
+	},
+	{Int32, Double, Int64}: func(a, b, out any, shape []int) {
+		RowAdd(a.([]int32), b.([]float64), out.([]int64), shape)
+	},
+	{Int32, Int32, Float}: func(a, b, out any, shape []int) {
+		RowAdd(a.([]int32), b.([]int32), out.([]float32), shape)
+	},
+	{Int32, Int32, Double}: func(a, b, out any, shape []int) {
+		RowAdd(a.([]int32), b.([]int32), out.([]float64), shape)
+	},
+	{Int32, Int32, Int32}: func(a, b, out any, shape []int) {
+		RowAdd(a.([]int32), b.([]int32), out.([]int32), shape)
+	},
+	{Int32, Int32, Int64}: func(a, b, out any, shape []int) {
+		RowAdd(a.([]int32), b.([]int32), out.([]int64), shape)
+	},
+	{Int32, Int64, Float}: func(a, b, out any, shape []int) {
+		RowAdd(a.([]int32), b.([]int64), out.([]float32), shape)
+	},
+	{Int32, Int64, Double}: func(a, b, out any, shape []int) {
+		RowAdd(a.([]int32), b.([]int64), out.([]float64), shape)
+	},
+	{Int32, Int64, Int32}: func(a, b, out any, shape []int) {
+		RowAdd(a.([]int32), b.([]int64), out.([]int32), shape)
+	},
+	{Int32, Int64, Int64}: func(a, b, out any, shape []int) {
+		RowAdd(a.([]int32), b.([]int64), out.([]int64), shape)
+	},
+	{Int64, Float, Float}: func(a, b, out any, shape []int) {
+		RowAdd(a.([]int64), b.([]float32), out.([]float32), shape)
+	},
+	{Int64, Float, Double}: func(a, b, out any, shape []int) {
+		RowAdd(a.([]int64), b.([]float32), out.([]float64), shape)
+	},
+	{Int64, Float, Int32}: func(a, b, out any, shape []int) {
+		RowAdd(a.([]int64), b.([]float32), out.([]int32), shape)
+	},
+	{Int64, Float, Int64}: func(a, b, out any, shape []int) {
+		RowAdd(a.([]int64), b.([]float32), out.([]int64), shape)
+	},
+	{Int64, Double, Float}: func(a, b, out any, shape []int) {
+		RowAdd(a.([]int64), b.([]float64), out.([]float32), shape)
+	},
+	{Int64, Double, Double}: func(a, b, out any, shape []int) {
+		RowAdd(a.([]int64), b.([]float64), out.([]float64), shape)
+	},
+	{Int64, Double, Int32}: func(a, b, out any, shape []int) {
+		RowAdd(a.([]int64), b.([]float64), out.([]int32), shape)
+	},
+	{Int64, Double, Int64}: func(a, b, out any, shape []int) {
+		RowAdd(a.([]int64), b.([]float64), out.([]int64), shape)
+	},
+	{Int64, Int32, Float}: func(a, b, out any, shape []int) {
+		RowAdd(a.([]int64), b.([]int32), out.([]float32), shape)
+	},
+	{Int64, Int32, Double}: func(a, b, out any, shape []int) {
+		RowAdd(a.([]int64), b.([]int32), out.([]float64), shape)
+	},
+	{Int64, Int32, Int32}: func(a, b, out any, shape []int) {
+		RowAdd(a.([]int64), b.([]int32), out.([]int32), shape)
+	},
+	{Int64, Int32, Int64}: func(a, b, out any, shape []int) {
+		RowAdd(a.([]int64), b.([]int32), out.([]int64), shape)
+	},
+	{Int64, Int64, Float}: func(a, b, out any, shape []int) {
+		RowAdd(a.([]int64), b.([]int64), out.([]float32), shape)
+	},
+	{Int64, Int64, Double}: func(a, b, out any, shape []int) {
+		RowAdd(a.([]int64), b.([]int64), out.([]float64), shape)
+	},
+	{Int64, Int64, Int32}: func(a, b, out any, shape []int) {
+		RowAdd(a.([]int64), b.([]int64), out.([]int32), shape)
+	},
+	{Int64, Int64, Int64}: func(a, b, out any, shape []int) {
+		RowAdd(a.([]int64), b.([]int64), out.([]int64), shape)
+	},
+}
+
+func RowAdd[T Numeric, U Numeric, V Numeric](first []T, row []U, result []V, shape []int) {
+	for i := range shape[0] {
+		for j := range shape[1] {
+			result[i*shape[1]+j] = V(first[i*shape[1]+j]) + V(row[j])
 		}
 	}
-	return out, nil
 }
 
 func (t *Tensor) addRow(other *Tensor, out *Tensor) (*Tensor, error) {
@@ -485,184 +731,217 @@ func (t *Tensor) addRow(other *Tensor, out *Tensor) (*Tensor, error) {
 	if out == nil {
 		out = createOutputTensor(t.DType, other.DType, t.Shape)
 	}
-	if t.DType == Float && other.DType == Float {
-		switch out.DType {
-		case Float:
-			RowAdd(t.FloatData, other.FloatData, out.FloatData, t.Shape)
-		case Double:
-			RowAdd(t.FloatData, other.FloatData, out.DoubleData, t.Shape)
-		case Int32:
-			RowAdd(t.FloatData, other.FloatData, out.Int32Data, t.Shape)
-		case Int64:
-			RowAdd(t.FloatData, other.FloatData, out.Int64Data, t.Shape)
-		}
-	} else if t.DType == Float && other.DType == Double {
-		switch out.DType {
-		case Float:
-			RowAdd(t.FloatData, other.DoubleData, out.FloatData, t.Shape)
-		case Double:
-			RowAdd(t.FloatData, other.DoubleData, out.DoubleData, t.Shape)
-		case Int32:
-			RowAdd(t.FloatData, other.DoubleData, out.Int32Data, t.Shape)
-		case Int64:
-			RowAdd(t.FloatData, other.DoubleData, out.Int64Data, t.Shape)
-		}
-	} else if t.DType == Float && other.DType == Int32 {
-		switch out.DType {
-		case Float:
-			RowAdd(t.FloatData, other.Int32Data, out.FloatData, t.Shape)
-		case Double:
-			RowAdd(t.FloatData, other.Int32Data, out.DoubleData, t.Shape)
-		case Int32:
-			RowAdd(t.FloatData, other.Int32Data, out.Int32Data, t.Shape)
-		case Int64:
-			RowAdd(t.FloatData, other.Int32Data, out.Int64Data, t.Shape)
-		}
-	} else if t.DType == Float && other.DType == Int64 {
-		switch out.DType {
-		case Float:
-			RowAdd(t.FloatData, other.Int64Data, out.FloatData, t.Shape)
-		case Double:
-			RowAdd(t.FloatData, other.Int64Data, out.DoubleData, t.Shape)
-		case Int32:
-			RowAdd(t.FloatData, other.Int64Data, out.Int32Data, t.Shape)
-		case Int64:
-			RowAdd(t.FloatData, other.Int64Data, out.Int64Data, t.Shape)
-		}
-	} else if t.DType == Double && other.DType == Float {
-		switch out.DType {
-		case Float:
-			RowAdd(t.DoubleData, other.FloatData, out.FloatData, t.Shape)
-		case Double:
-			RowAdd(t.DoubleData, other.FloatData, out.DoubleData, t.Shape)
-		case Int32:
-			RowAdd(t.DoubleData, other.FloatData, out.Int32Data, t.Shape)
-		case Int64:
-			RowAdd(t.DoubleData, other.FloatData, out.Int64Data, t.Shape)
-		}
-	} else if t.DType == Double && other.DType == Double {
-		switch out.DType {
-		case Float:
-			RowAdd(t.DoubleData, other.DoubleData, out.FloatData, t.Shape)
-		case Double:
-			RowAdd(t.DoubleData, other.DoubleData, out.DoubleData, t.Shape)
-		case Int32:
-			RowAdd(t.DoubleData, other.DoubleData, out.Int32Data, t.Shape)
-		case Int64:
-			RowAdd(t.DoubleData, other.DoubleData, out.Int64Data, t.Shape)
-		}
-	} else if t.DType == Double && other.DType == Int32 {
-		switch out.DType {
-		case Float:
-			RowAdd(t.DoubleData, other.Int32Data, out.FloatData, t.Shape)
-		case Double:
-			RowAdd(t.DoubleData, other.Int32Data, out.DoubleData, t.Shape)
-		case Int32:
-			RowAdd(t.DoubleData, other.Int32Data, out.Int32Data, t.Shape)
-		case Int64:
-			RowAdd(t.DoubleData, other.Int32Data, out.Int64Data, t.Shape)
-		}
-	} else if t.DType == Double && other.DType == Int64 {
-		switch out.DType {
-		case Float:
-			RowAdd(t.DoubleData, other.Int64Data, out.FloatData, t.Shape)
-		case Double:
-			RowAdd(t.DoubleData, other.Int64Data, out.DoubleData, t.Shape)
-		case Int32:
-			RowAdd(t.DoubleData, other.Int64Data, out.Int32Data, t.Shape)
-		case Int64:
-			RowAdd(t.DoubleData, other.Int64Data, out.Int64Data, t.Shape)
-		}
-	} else if t.DType == Int32 && other.DType == Float {
-		switch out.DType {
-		case Float:
-			RowAdd(t.Int32Data, other.FloatData, out.FloatData, t.Shape)
-		case Double:
-			RowAdd(t.Int32Data, other.FloatData, out.DoubleData, t.Shape)
-		case Int32:
-			RowAdd(t.Int32Data, other.FloatData, out.Int32Data, t.Shape)
-		case Int64:
-			RowAdd(t.Int32Data, other.FloatData, out.Int64Data, t.Shape)
-		}
-	} else if t.DType == Int32 && other.DType == Double {
-		switch out.DType {
-		case Float:
-			RowAdd(t.Int32Data, other.DoubleData, out.FloatData, t.Shape)
-		case Double:
-			RowAdd(t.Int32Data, other.DoubleData, out.DoubleData, t.Shape)
-		case Int32:
-			RowAdd(t.Int32Data, other.DoubleData, out.Int32Data, t.Shape)
-		case Int64:
-			RowAdd(t.Int32Data, other.DoubleData, out.Int64Data, t.Shape)
-		}
-	} else if t.DType == Int32 && other.DType == Int32 {
-		switch out.DType {
-		case Float:
-			RowAdd(t.Int32Data, other.Int32Data, out.FloatData, t.Shape)
-		case Double:
-			RowAdd(t.Int32Data, other.Int32Data, out.DoubleData, t.Shape)
-		case Int32:
-			RowAdd(t.Int32Data, other.Int32Data, out.Int32Data, t.Shape)
-		case Int64:
-			RowAdd(t.Int32Data, other.Int32Data, out.Int64Data, t.Shape)
-		}
-	} else if t.DType == Int32 && other.DType == Int64 {
-		switch out.DType {
-		case Float:
-			RowAdd(t.Int32Data, other.Int64Data, out.FloatData, t.Shape)
-		case Double:
-			RowAdd(t.Int32Data, other.Int64Data, out.DoubleData, t.Shape)
-		case Int32:
-			RowAdd(t.Int32Data, other.Int64Data, out.Int32Data, t.Shape)
-		case Int64:
-			RowAdd(t.Int32Data, other.Int64Data, out.Int64Data, t.Shape)
-		}
-	} else if t.DType == Int64 && other.DType == Float {
-		switch out.DType {
-		case Float:
-			RowAdd(t.Int64Data, other.FloatData, out.FloatData, t.Shape)
-		case Double:
-			RowAdd(t.Int64Data, other.FloatData, out.DoubleData, t.Shape)
-		case Int32:
-			RowAdd(t.Int64Data, other.FloatData, out.Int32Data, t.Shape)
-		case Int64:
-			RowAdd(t.Int64Data, other.FloatData, out.Int64Data, t.Shape)
-		}
-	} else if t.DType == Int64 && other.DType == Double {
-		switch out.DType {
-		case Float:
-			RowAdd(t.Int64Data, other.DoubleData, out.FloatData, t.Shape)
-		case Double:
-			RowAdd(t.Int64Data, other.DoubleData, out.DoubleData, t.Shape)
-		case Int32:
-			RowAdd(t.Int64Data, other.DoubleData, out.Int32Data, t.Shape)
-		case Int64:
-			RowAdd(t.Int64Data, other.DoubleData, out.Int64Data, t.Shape)
-		}
-	} else if t.DType == Int64 && other.DType == Int32 {
-		switch out.DType {
-		case Float:
-			RowAdd(t.Int64Data, other.Int32Data, out.FloatData, t.Shape)
-		case Double:
-			RowAdd(t.Int64Data, other.Int32Data, out.DoubleData, t.Shape)
-		case Int32:
-			RowAdd(t.Int64Data, other.Int32Data, out.Int32Data, t.Shape)
-		case Int64:
-			RowAdd(t.Int64Data, other.Int32Data, out.Int64Data, t.Shape)
-		}
-	} else if t.DType == Int64 && other.DType == Int64 {
-		switch out.DType {
-		case Float:
-			RowAdd(t.Int64Data, other.Int64Data, out.FloatData, t.Shape)
-		case Double:
-			RowAdd(t.Int64Data, other.Int64Data, out.DoubleData, t.Shape)
-		case Int32:
-			RowAdd(t.Int64Data, other.Int64Data, out.Int32Data, t.Shape)
-		case Int64:
-			RowAdd(t.Int64Data, other.Int64Data, out.Int64Data, t.Shape)
+	key := addKey{t.DType, other.DType, out.DType}
+	fn, ok := rowAddDispatch[key]
+	if !ok {
+		return nil, fmt.Errorf("unsupported add combination: %v + %v -> %v", t.DType, other.DType, out.DType)
+	}
+	fn(t.rawData(), other.rawData(), out.rawData(), t.Shape)
+	return out, nil
+}
+
+var colAddDispatch = map[addKey]vecAddFunc{
+	{Float, Float, Float}: func(a, b, out any, shape []int) {
+		ColAdd(a.([]float32), b.([]float32), out.([]float32), shape)
+	},
+	{Float, Float, Double}: func(a, b, out any, shape []int) {
+		ColAdd(a.([]float32), b.([]float32), out.([]float64), shape)
+	},
+	{Float, Float, Int32}: func(a, b, out any, shape []int) {
+		ColAdd(a.([]float32), b.([]float32), out.([]int32), shape)
+	},
+	{Float, Float, Int64}: func(a, b, out any, shape []int) {
+		ColAdd(a.([]float32), b.([]float32), out.([]int64), shape)
+	},
+	{Float, Double, Float}: func(a, b, out any, shape []int) {
+		ColAdd(a.([]float32), b.([]float64), out.([]float32), shape)
+	},
+	{Float, Double, Double}: func(a, b, out any, shape []int) {
+		ColAdd(a.([]float32), b.([]float64), out.([]float64), shape)
+	},
+	{Float, Double, Int32}: func(a, b, out any, shape []int) {
+		ColAdd(a.([]float32), b.([]float64), out.([]int32), shape)
+	},
+	{Float, Double, Int64}: func(a, b, out any, shape []int) {
+		ColAdd(a.([]float32), b.([]float64), out.([]int64), shape)
+	},
+	{Float, Int32, Float}: func(a, b, out any, shape []int) {
+		ColAdd(a.([]float32), b.([]int32), out.([]float32), shape)
+	},
+	{Float, Int32, Double}: func(a, b, out any, shape []int) {
+		ColAdd(a.([]float32), b.([]int32), out.([]float64), shape)
+	},
+	{Float, Int32, Int32}: func(a, b, out any, shape []int) {
+		ColAdd(a.([]float32), b.([]int32), out.([]int32), shape)
+	},
+	{Float, Int32, Int64}: func(a, b, out any, shape []int) {
+		ColAdd(a.([]float32), b.([]int32), out.([]int64), shape)
+	},
+	{Float, Int64, Float}: func(a, b, out any, shape []int) {
+		ColAdd(a.([]float32), b.([]int64), out.([]float32), shape)
+	},
+	{Float, Int64, Double}: func(a, b, out any, shape []int) {
+		ColAdd(a.([]float32), b.([]int64), out.([]float64), shape)
+	},
+	{Float, Int64, Int32}: func(a, b, out any, shape []int) {
+		ColAdd(a.([]float32), b.([]int64), out.([]int32), shape)
+	},
+	{Float, Int64, Int64}: func(a, b, out any, shape []int) {
+		ColAdd(a.([]float32), b.([]int64), out.([]int64), shape)
+	},
+	{Double, Float, Float}: func(a, b, out any, shape []int) {
+		ColAdd(a.([]float64), b.([]float32), out.([]float32), shape)
+	},
+	{Double, Float, Double}: func(a, b, out any, shape []int) {
+		ColAdd(a.([]float64), b.([]float32), out.([]float64), shape)
+	},
+	{Double, Float, Int32}: func(a, b, out any, shape []int) {
+		ColAdd(a.([]float64), b.([]float32), out.([]int32), shape)
+	},
+	{Double, Float, Int64}: func(a, b, out any, shape []int) {
+		ColAdd(a.([]float64), b.([]float32), out.([]int64), shape)
+	},
+	{Double, Double, Float}: func(a, b, out any, shape []int) {
+		ColAdd(a.([]float64), b.([]float64), out.([]float32), shape)
+	},
+	{Double, Double, Double}: func(a, b, out any, shape []int) {
+		ColAdd(a.([]float64), b.([]float64), out.([]float64), shape)
+	},
+	{Double, Double, Int32}: func(a, b, out any, shape []int) {
+		ColAdd(a.([]float64), b.([]float64), out.([]int32), shape)
+	},
+	{Double, Double, Int64}: func(a, b, out any, shape []int) {
+		ColAdd(a.([]float64), b.([]float64), out.([]int64), shape)
+	},
+	{Double, Int32, Float}: func(a, b, out any, shape []int) {
+		ColAdd(a.([]float64), b.([]int32), out.([]float32), shape)
+	},
+	{Double, Int32, Double}: func(a, b, out any, shape []int) {
+		ColAdd(a.([]float64), b.([]int32), out.([]float64), shape)
+	},
+	{Double, Int32, Int32}: func(a, b, out any, shape []int) {
+		ColAdd(a.([]float64), b.([]int32), out.([]int32), shape)
+	},
+	{Double, Int32, Int64}: func(a, b, out any, shape []int) {
+		ColAdd(a.([]float64), b.([]int32), out.([]int64), shape)
+	},
+	{Double, Int64, Float}: func(a, b, out any, shape []int) {
+		ColAdd(a.([]float64), b.([]int64), out.([]float32), shape)
+	},
+	{Double, Int64, Double}: func(a, b, out any, shape []int) {
+		ColAdd(a.([]float64), b.([]int64), out.([]float64), shape)
+	},
+	{Double, Int64, Int32}: func(a, b, out any, shape []int) {
+		ColAdd(a.([]float64), b.([]int64), out.([]int32), shape)
+	},
+	{Double, Int64, Int64}: func(a, b, out any, shape []int) {
+		ColAdd(a.([]float64), b.([]int64), out.([]int64), shape)
+	},
+	{Int32, Float, Float}: func(a, b, out any, shape []int) {
+		ColAdd(a.([]int32), b.([]float32), out.([]float32), shape)
+	},
+	{Int32, Float, Double}: func(a, b, out any, shape []int) {
+		ColAdd(a.([]int32), b.([]float32), out.([]float64), shape)
+	},
+	{Int32, Float, Int32}: func(a, b, out any, shape []int) {
+		ColAdd(a.([]int32), b.([]float32), out.([]int32), shape)
+	},
+	{Int32, Float, Int64}: func(a, b, out any, shape []int) {
+		ColAdd(a.([]int32), b.([]float32), out.([]int64), shape)
+	},
+	{Int32, Double, Float}: func(a, b, out any, shape []int) {
+		ColAdd(a.([]int32), b.([]float64), out.([]float32), shape)
+	},
+	{Int32, Double, Double}: func(a, b, out any, shape []int) {
+		ColAdd(a.([]int32), b.([]float64), out.([]float64), shape)
+	},
+	{Int32, Double, Int32}: func(a, b, out any, shape []int) {
+		ColAdd(a.([]int32), b.([]float64), out.([]int32), shape)
+	},
+	{Int32, Double, Int64}: func(a, b, out any, shape []int) {
+		ColAdd(a.([]int32), b.([]float64), out.([]int64), shape)
+	},
+	{Int32, Int32, Float}: func(a, b, out any, shape []int) {
+		ColAdd(a.([]int32), b.([]int32), out.([]float32), shape)
+	},
+	{Int32, Int32, Double}: func(a, b, out any, shape []int) {
+		ColAdd(a.([]int32), b.([]int32), out.([]float64), shape)
+	},
+	{Int32, Int32, Int32}: func(a, b, out any, shape []int) {
+		ColAdd(a.([]int32), b.([]int32), out.([]int32), shape)
+	},
+	{Int32, Int32, Int64}: func(a, b, out any, shape []int) {
+		ColAdd(a.([]int32), b.([]int32), out.([]int64), shape)
+	},
+	{Int32, Int64, Float}: func(a, b, out any, shape []int) {
+		ColAdd(a.([]int32), b.([]int64), out.([]float32), shape)
+	},
+	{Int32, Int64, Double}: func(a, b, out any, shape []int) {
+		ColAdd(a.([]int32), b.([]int64), out.([]float64), shape)
+	},
+	{Int32, Int64, Int32}: func(a, b, out any, shape []int) {
+		ColAdd(a.([]int32), b.([]int64), out.([]int32), shape)
+	},
+	{Int32, Int64, Int64}: func(a, b, out any, shape []int) {
+		ColAdd(a.([]int32), b.([]int64), out.([]int64), shape)
+	},
+	{Int64, Float, Float}: func(a, b, out any, shape []int) {
+		ColAdd(a.([]int64), b.([]float32), out.([]float32), shape)
+	},
+	{Int64, Float, Double}: func(a, b, out any, shape []int) {
+		ColAdd(a.([]int64), b.([]float32), out.([]float64), shape)
+	},
+	{Int64, Float, Int32}: func(a, b, out any, shape []int) {
+		ColAdd(a.([]int64), b.([]float32), out.([]int32), shape)
+	},
+	{Int64, Float, Int64}: func(a, b, out any, shape []int) {
+		ColAdd(a.([]int64), b.([]float32), out.([]int64), shape)
+	},
+	{Int64, Double, Float}: func(a, b, out any, shape []int) {
+		ColAdd(a.([]int64), b.([]float64), out.([]float32), shape)
+	},
+	{Int64, Double, Double}: func(a, b, out any, shape []int) {
+		ColAdd(a.([]int64), b.([]float64), out.([]float64), shape)
+	},
+	{Int64, Double, Int32}: func(a, b, out any, shape []int) {
+		ColAdd(a.([]int64), b.([]float64), out.([]int32), shape)
+	},
+	{Int64, Double, Int64}: func(a, b, out any, shape []int) {
+		ColAdd(a.([]int64), b.([]float64), out.([]int64), shape)
+	},
+	{Int64, Int32, Float}: func(a, b, out any, shape []int) {
+		ColAdd(a.([]int64), b.([]int32), out.([]float32), shape)
+	},
+	{Int64, Int32, Double}: func(a, b, out any, shape []int) {
+		ColAdd(a.([]int64), b.([]int32), out.([]float64), shape)
+	},
+	{Int64, Int32, Int32}: func(a, b, out any, shape []int) {
+		ColAdd(a.([]int64), b.([]int32), out.([]int32), shape)
+	},
+	{Int64, Int32, Int64}: func(a, b, out any, shape []int) {
+		ColAdd(a.([]int64), b.([]int32), out.([]int64), shape)
+	},
+	{Int64, Int64, Float}: func(a, b, out any, shape []int) {
+		ColAdd(a.([]int64), b.([]int64), out.([]float32), shape)
+	},
+	{Int64, Int64, Double}: func(a, b, out any, shape []int) {
+		ColAdd(a.([]int64), b.([]int64), out.([]float64), shape)
+	},
+	{Int64, Int64, Int32}: func(a, b, out any, shape []int) {
+		ColAdd(a.([]int64), b.([]int64), out.([]int32), shape)
+	},
+	{Int64, Int64, Int64}: func(a, b, out any, shape []int) {
+		ColAdd(a.([]int64), b.([]int64), out.([]int64), shape)
+	},
+}
+
+func ColAdd[T Numeric, U Numeric, V Numeric](first []T, col []U, result []V, shape []int) {
+	for i := range shape[0] {
+		elem := V(col[i])
+		for j := range shape[1] {
+			result[i*shape[1]+j] = V(first[i*shape[1]+j]) + elem
 		}
 	}
-	return out, nil
 }
 
 func (t *Tensor) addCol(other *Tensor, out *Tensor) (*Tensor, error) {
@@ -673,182 +952,12 @@ func (t *Tensor) addCol(other *Tensor, out *Tensor) (*Tensor, error) {
 	if out == nil {
 		out = createOutputTensor(t.DType, other.DType, t.Shape)
 	}
-	if t.DType == Float && other.DType == Float {
-		switch out.DType {
-		case Float:
-			ColAdd(t.FloatData, other.FloatData, out.FloatData, t.Shape)
-		case Double:
-			ColAdd(t.FloatData, other.FloatData, out.DoubleData, t.Shape)
-		case Int32:
-			ColAdd(t.FloatData, other.FloatData, out.Int32Data, t.Shape)
-		case Int64:
-			ColAdd(t.FloatData, other.FloatData, out.Int64Data, t.Shape)
-		}
-	} else if t.DType == Float && other.DType == Double {
-		switch out.DType {
-		case Float:
-			ColAdd(t.FloatData, other.DoubleData, out.FloatData, t.Shape)
-		case Double:
-			ColAdd(t.FloatData, other.DoubleData, out.DoubleData, t.Shape)
-		case Int32:
-			ColAdd(t.FloatData, other.DoubleData, out.Int32Data, t.Shape)
-		case Int64:
-			ColAdd(t.FloatData, other.DoubleData, out.Int64Data, t.Shape)
-		}
-	} else if t.DType == Float && other.DType == Int32 {
-		switch out.DType {
-		case Float:
-			ColAdd(t.FloatData, other.Int32Data, out.FloatData, t.Shape)
-		case Double:
-			ColAdd(t.FloatData, other.Int32Data, out.DoubleData, t.Shape)
-		case Int32:
-			ColAdd(t.FloatData, other.Int32Data, out.Int32Data, t.Shape)
-		case Int64:
-			ColAdd(t.FloatData, other.Int32Data, out.Int64Data, t.Shape)
-		}
-	} else if t.DType == Float && other.DType == Int64 {
-		switch out.DType {
-		case Float:
-			ColAdd(t.FloatData, other.Int64Data, out.FloatData, t.Shape)
-		case Double:
-			ColAdd(t.FloatData, other.Int64Data, out.DoubleData, t.Shape)
-		case Int32:
-			ColAdd(t.FloatData, other.Int64Data, out.Int32Data, t.Shape)
-		case Int64:
-			ColAdd(t.FloatData, other.Int64Data, out.Int64Data, t.Shape)
-		}
-	} else if t.DType == Double && other.DType == Float {
-		switch out.DType {
-		case Float:
-			ColAdd(t.DoubleData, other.FloatData, out.FloatData, t.Shape)
-		case Double:
-			ColAdd(t.DoubleData, other.FloatData, out.DoubleData, t.Shape)
-		case Int32:
-			ColAdd(t.DoubleData, other.FloatData, out.Int32Data, t.Shape)
-		case Int64:
-			ColAdd(t.DoubleData, other.FloatData, out.Int64Data, t.Shape)
-		}
-	} else if t.DType == Double && other.DType == Double {
-		switch out.DType {
-		case Float:
-			ColAdd(t.DoubleData, other.DoubleData, out.FloatData, t.Shape)
-		case Double:
-			ColAdd(t.DoubleData, other.DoubleData, out.DoubleData, t.Shape)
-		case Int32:
-			ColAdd(t.DoubleData, other.DoubleData, out.Int32Data, t.Shape)
-		case Int64:
-			ColAdd(t.DoubleData, other.DoubleData, out.Int64Data, t.Shape)
-		}
-	} else if t.DType == Double && other.DType == Int32 {
-		switch out.DType {
-		case Float:
-			ColAdd(t.DoubleData, other.Int32Data, out.FloatData, t.Shape)
-		case Double:
-			ColAdd(t.DoubleData, other.Int32Data, out.DoubleData, t.Shape)
-		case Int32:
-			ColAdd(t.DoubleData, other.Int32Data, out.Int32Data, t.Shape)
-		case Int64:
-			ColAdd(t.DoubleData, other.Int32Data, out.Int64Data, t.Shape)
-		}
-	} else if t.DType == Double && other.DType == Int64 {
-		switch out.DType {
-		case Float:
-			ColAdd(t.DoubleData, other.Int64Data, out.FloatData, t.Shape)
-		case Double:
-			ColAdd(t.DoubleData, other.Int64Data, out.DoubleData, t.Shape)
-		case Int32:
-			ColAdd(t.DoubleData, other.Int64Data, out.Int32Data, t.Shape)
-		case Int64:
-			ColAdd(t.DoubleData, other.Int64Data, out.Int64Data, t.Shape)
-		}
-	} else if t.DType == Int32 && other.DType == Float {
-		switch out.DType {
-		case Float:
-			ColAdd(t.Int32Data, other.FloatData, out.FloatData, t.Shape)
-		case Double:
-			ColAdd(t.Int32Data, other.FloatData, out.DoubleData, t.Shape)
-		case Int32:
-			ColAdd(t.Int32Data, other.FloatData, out.Int32Data, t.Shape)
-		case Int64:
-			ColAdd(t.Int32Data, other.FloatData, out.Int64Data, t.Shape)
-		}
-	} else if t.DType == Int32 && other.DType == Double {
-		switch out.DType {
-		case Float:
-			ColAdd(t.Int32Data, other.DoubleData, out.FloatData, t.Shape)
-		case Double:
-			ColAdd(t.Int32Data, other.DoubleData, out.DoubleData, t.Shape)
-		case Int32:
-			ColAdd(t.Int32Data, other.DoubleData, out.Int32Data, t.Shape)
-		case Int64:
-			ColAdd(t.Int32Data, other.DoubleData, out.Int64Data, t.Shape)
-		}
-	} else if t.DType == Int32 && other.DType == Int32 {
-		switch out.DType {
-		case Float:
-			ColAdd(t.Int32Data, other.Int32Data, out.FloatData, t.Shape)
-		case Double:
-			ColAdd(t.Int32Data, other.Int32Data, out.DoubleData, t.Shape)
-		case Int32:
-			ColAdd(t.Int32Data, other.Int32Data, out.Int32Data, t.Shape)
-		case Int64:
-			ColAdd(t.Int32Data, other.Int32Data, out.Int64Data, t.Shape)
-		}
-	} else if t.DType == Int32 && other.DType == Int64 {
-		switch out.DType {
-		case Float:
-			ColAdd(t.Int32Data, other.Int64Data, out.FloatData, t.Shape)
-		case Double:
-			ColAdd(t.Int32Data, other.Int64Data, out.DoubleData, t.Shape)
-		case Int32:
-			ColAdd(t.Int32Data, other.Int64Data, out.Int32Data, t.Shape)
-		case Int64:
-			ColAdd(t.Int32Data, other.Int64Data, out.Int64Data, t.Shape)
-		}
-	} else if t.DType == Int64 && other.DType == Float {
-		switch out.DType {
-		case Float:
-			ColAdd(t.Int64Data, other.FloatData, out.FloatData, t.Shape)
-		case Double:
-			ColAdd(t.Int64Data, other.FloatData, out.DoubleData, t.Shape)
-		case Int32:
-			ColAdd(t.Int64Data, other.FloatData, out.Int32Data, t.Shape)
-		case Int64:
-			ColAdd(t.Int64Data, other.FloatData, out.Int64Data, t.Shape)
-		}
-	} else if t.DType == Int64 && other.DType == Double {
-		switch out.DType {
-		case Float:
-			ColAdd(t.Int64Data, other.DoubleData, out.FloatData, t.Shape)
-		case Double:
-			ColAdd(t.Int64Data, other.DoubleData, out.DoubleData, t.Shape)
-		case Int32:
-			ColAdd(t.Int64Data, other.DoubleData, out.Int32Data, t.Shape)
-		case Int64:
-			ColAdd(t.Int64Data, other.DoubleData, out.Int64Data, t.Shape)
-		}
-	} else if t.DType == Int64 && other.DType == Int32 {
-		switch out.DType {
-		case Float:
-			ColAdd(t.Int64Data, other.Int32Data, out.FloatData, t.Shape)
-		case Double:
-			ColAdd(t.Int64Data, other.Int32Data, out.DoubleData, t.Shape)
-		case Int32:
-			ColAdd(t.Int64Data, other.Int32Data, out.Int32Data, t.Shape)
-		case Int64:
-			ColAdd(t.Int64Data, other.Int32Data, out.Int64Data, t.Shape)
-		}
-	} else if t.DType == Int64 && other.DType == Int64 {
-		switch out.DType {
-		case Float:
-			ColAdd(t.Int64Data, other.Int64Data, out.FloatData, t.Shape)
-		case Double:
-			ColAdd(t.Int64Data, other.Int64Data, out.DoubleData, t.Shape)
-		case Int32:
-			ColAdd(t.Int64Data, other.Int64Data, out.Int32Data, t.Shape)
-		case Int64:
-			ColAdd(t.Int64Data, other.Int64Data, out.Int64Data, t.Shape)
-		}
+
+	key := addKey{t.DType, other.DType, out.DType}
+	fn, ok := colAddDispatch[key]
+	if !ok {
+		return nil, fmt.Errorf("unsupported add combination: %v + %v -> %v", t.DType, other.DType, out.DType)
 	}
+	fn(t.rawData(), other.rawData(), out.rawData(), t.Shape)
 	return out, nil
 }

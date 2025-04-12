@@ -185,6 +185,23 @@ func (t *Tensor) Alloc() {
 	}
 }
 
+func (t *Tensor) rawData() any {
+	switch t.DType {
+	case Float:
+		return t.FloatData
+	case Double:
+		return t.DoubleData
+	case Int32:
+		return t.Int32Data
+	case Int64:
+		return t.Int64Data
+	case String:
+		return t.StringData
+	default:
+		return nil
+	}
+}
+
 func (t *Tensor) String() string {
 	if t.DType == Undefined {
 		return "undefined tensor"

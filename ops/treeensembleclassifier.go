@@ -44,13 +44,10 @@ func (t *TreeEnsembleClassifier) Compute(k *kernel.Kernel) error {
 	input := data.Tensor
 
 	leave_index := t.tree.LeaveIndexTrees(input)
-	
-	
+
 	len_class_label_int64s := len(t.tree.Atts.classlabels_int64s)
 	len_class_label_strings := len(t.tree.Atts.classlabels_strings)
 
-	
-	
 	var n_classes int
 	if len_class_label_int64s > len_class_label_strings {
 		n_classes = len_class_label_int64s
@@ -58,11 +55,8 @@ func (t *TreeEnsembleClassifier) Compute(k *kernel.Kernel) error {
 		n_classes = len_class_label_strings
 	}
 	n_samples := leave_index.Shape[0]
-	
-	res, err := tensor.CreateEmptyTensor([]int{n_samples, n_classes}, tensor.Float)
-	if err != nil {
-		fmt.Errorf("error creating tensor: %v", err)
-	}
+
+	res := tensor.CreateEmptyTensor([]int{n_samples, n_classes}, tensor.Float)
 	if t.tree.Atts.base_values == nil {
 		res.FloatData[0] = 0
 	} else {
@@ -71,8 +65,6 @@ func (t *TreeEnsembleClassifier) Compute(k *kernel.Kernel) error {
 			copy(res.FloatData[i*n_classes:(i+1)*n_classes], baseValues)
 		}
 	}
-	
-
 
 	classIndex := make(map[TreeNodeKey][]int)
 	for i := 0; i < len(t.tree.Atts.class_treeids); i++ {
@@ -82,8 +74,6 @@ func (t *TreeEnsembleClassifier) Compute(k *kernel.Kernel) error {
 		classIndex[key] = append(classIndex[key], i)
 	}
 
-	
-	
 	var classWeights []float32
 	if t.tree.Atts.class_weights != nil {
 		classWeights = t.tree.Atts.class_weights.FloatData
@@ -95,7 +85,7 @@ func (t *TreeEnsembleClassifier) Compute(k *kernel.Kernel) error {
 
 	classIDs := t.tree.Atts.class_ids
 	numTrees := leave_index.Shape[1]
-	
+
 	for i := 0; i < n_samples; i++ {
 		start := i * leave_index.Shape[1]
 		end := start + numTrees
@@ -125,10 +115,7 @@ func (t *TreeEnsembleClassifier) Compute(k *kernel.Kernel) error {
 	binary = len(uniqueClassIDs) == 1
 	if binary {
 		if n_classes == 1 && (len(t.tree.Atts.classlabels_int64s) == 1 || len(t.tree.Atts.classlabels_strings) == 1) {
-			newRes, err := tensor.CreateEmptyTensor([]int{n_samples, 2}, tensor.Float)
-			if err != nil {
-				return fmt.Errorf("error creating tensor: %v", err)
-			}
+			newRes := tensor.CreateEmptyTensor([]int{n_samples, 2}, tensor.Float)
 			for i := 0; i < n_samples; i++ {
 				newRes.FloatData[i*2+1] = res.FloatData[i*n_classes]
 			}
@@ -140,40 +127,37 @@ func (t *TreeEnsembleClassifier) Compute(k *kernel.Kernel) error {
 		}
 
 		for i := 0; i < n_samples; i++ {
-			 if t.tree.Atts.post_transform == "NONE" || t.tree.Atts.post_transform == "" || t.tree.Atts.post_transform == "PROBIT" {
+			if t.tree.Atts.post_transform == "NONE" || t.tree.Atts.post_transform == "" || t.tree.Atts.post_transform == "PROBIT" {
 				res.FloatData[i*n_classes] = 1 - res.FloatData[i*n_classes+1]
-			 } else {
+			} else {
 				res.FloatData[i*n_classes] = -res.FloatData[i*n_classes+1]
-			 }
+			}
 		}
 
 	}
 
-	
-
 	switch t.tree.Atts.post_transform {
-		case "LOGISITIC":
-			err = res.LogisticInPlace()
-			if err != nil {
-				return fmt.Errorf("error applying logistic: %v", err)
-			}
-		case "SOFTMAX":
-			err = res.SoftmaxInPlace()
-			if err != nil {
-				return fmt.Errorf("error applying softmax: %v", err)
-			}
-		case "PROBIT":
-			err = res.ProbitInPlace()
-			if err != nil {
-				return fmt.Errorf("error applying probit: %v", err)
-			}
-		case "SOFTMAX_ZERO":
-			err = res.SoftmaxZeroInPlace()
-			if err != nil {
-				return fmt.Errorf("error applying softmax_zero: %v", err)
-			}
+	case "LOGISITIC":
+		err = res.LogisticInPlace()
+		if err != nil {
+			return fmt.Errorf("error applying logistic: %v", err)
+		}
+	case "SOFTMAX":
+		err = res.SoftmaxInPlace()
+		if err != nil {
+			return fmt.Errorf("error applying softmax: %v", err)
+		}
+	case "PROBIT":
+		err = res.ProbitInPlace()
+		if err != nil {
+			return fmt.Errorf("error applying probit: %v", err)
+		}
+	case "SOFTMAX_ZERO":
+		err = res.SoftmaxZeroInPlace()
+		if err != nil {
+			return fmt.Errorf("error applying softmax_zero: %v", err)
+		}
 	}
-	
 
 	var scoresTensor *tensor.Tensor
 	scoresTensor, err = k.Output(t.outputs[1], []int{n_samples, n_classes}, tensor.Float)

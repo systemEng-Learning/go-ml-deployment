@@ -31,7 +31,6 @@ var dataTypeMap = map[DataType]string{
 	StringMap: "stringmap",
 	IntMap:    "intmap",
 	String:    "string",
-
 }
 
 func (dt DataType) String() string {
@@ -75,33 +74,34 @@ func (t *Tensor) Clone() (*Tensor, error) {
 	return &newTensor, nil
 }
 
-func CreateEmptyTensor(shape []int, dataType DataType) (*Tensor, error) {
-	if dataType == Undefined {
-		return nil, fmt.Errorf("create tensor: unsupported data type")
-	}
+func CreateEmptyTensor(shape []int, dataType DataType) *Tensor {
 	t := &Tensor{
 		Shape: shape,
 		DType: dataType,
 	}
+	size := shape[0]
+	if len(shape) == 2 {
+		size *= shape[1]
+	}
 
 	switch dataType {
 	case Float:
-		t.FloatData = make([]float32, shape[0]*shape[1])
+		t.FloatData = make([]float32, size)
 	case Int32:
-		t.Int32Data = make([]int32, shape[0]*shape[1])
+		t.Int32Data = make([]int32, size)
 	case Int64:
-		t.Int64Data = make([]int64, shape[0]*shape[1])
+		t.Int64Data = make([]int64, size)
 	case Double:
-		t.DoubleData = make([]float64, shape[0]*shape[1])
+		t.DoubleData = make([]float64, size)
 	case IntMap:
 		t.IntMap = make([]map[int]float32, shape[0])
 	case StringMap:
 		t.StringMap = make([]map[string]float32, shape[0])
 	case String:
-		t.StringData = make([][]byte, shape[0]*shape[1])
+		t.StringData = make([][]byte, size)
 	}
 
-	return t, nil
+	return t
 }
 
 func Create1DFloatTensor(data []float32) *Tensor {
@@ -119,7 +119,7 @@ func Create1DDoubleTensorFromFloat(data []float32) *Tensor {
 		FloatData: data,
 		DType:     Float,
 	}
-	t.castFloattoDouble()
+	t.Cast(Double)
 	return t
 }
 
@@ -182,6 +182,23 @@ func (t *Tensor) Alloc() {
 		t.StringMap = make([]map[string]float32, t.Shape[0])
 	case String:
 		t.StringData = make([][]byte, capacity)
+	}
+}
+
+func (t *Tensor) rawData() any {
+	switch t.DType {
+	case Float:
+		return t.FloatData
+	case Double:
+		return t.DoubleData
+	case Int32:
+		return t.Int32Data
+	case Int64:
+		return t.Int64Data
+	case String:
+		return t.StringData
+	default:
+		return nil
 	}
 }
 
@@ -300,10 +317,10 @@ func OnnxTypeToDtype(elemType int32) DataType {
 	}
 }
 
-func  FromTensorProto(Tp *ir.TensorProto) (*Tensor, error) {
+func FromTensorProto(Tp *ir.TensorProto) (*Tensor, error) {
 	dataType := Tp.DataType
 	t := &Tensor{}
-	
+
 	t.Shape = make([]int, len(Tp.Dims))
 	for i := range Tp.Dims {
 		t.Shape[i] = int(Tp.Dims[i])

@@ -11,6 +11,8 @@ import (
 
 type LinearClassifier struct {
 	input             int
+	num_targets       int
+	using_strings     bool
 	classlabel        []int64
 	classlabel_string [][]byte
 	coefficients      *tensor.Tensor
@@ -28,6 +30,7 @@ func (l *LinearClassifier) Init(k *kernel.Kernel, node *ir.NodeProto) error {
 	l.input = input
 	l.multiclass = false
 	l.post_transform = "NONE"
+	using_strings := false
 
 	for _, attr := range node.Attribute {
 		switch attr.Name {
@@ -35,6 +38,7 @@ func (l *LinearClassifier) Init(k *kernel.Kernel, node *ir.NodeProto) error {
 			l.classlabel = attr.Ints
 		case "classlabels_strings":
 			l.classlabel_string = attr.Strings
+			using_strings = true
 		case "coefficients":
 			l.coefficients = tensor.Create1DDoubleTensorFromFloat(attr.Floats)
 		case "intercepts":
@@ -49,6 +53,7 @@ func (l *LinearClassifier) Init(k *kernel.Kernel, node *ir.NodeProto) error {
 			return fmt.Errorf("%s not supported for %s", attr.Name, node.OpType)
 		}
 	}
+	l.using_strings = using_strings
 
 	if l.intercepts != nil {
 		coeffLen := l.coefficients.Shape[0]
@@ -57,6 +62,7 @@ func (l *LinearClassifier) Init(k *kernel.Kernel, node *ir.NodeProto) error {
 			return fmt.Errorf("coefficient length %d should be divisible by intercepts length %d", coeffLen, interLen)
 		}
 		l.coefficients.Shape = []int{interLen, coeffLen / interLen}
+		l.num_targets = interLen
 	}
 
 	l.outputs = make([]int, len(node.Output))
@@ -80,34 +86,45 @@ func (l *LinearClassifier) Compute(k *kernel.Kernel) error {
 	if len(input.Shape) == 1 {
 		input.Shape = []int{1, input.Shape[0]}
 	}
-
+	num_targets := l.num_targets
 	if l.intercepts == nil {
 		coeffLen := l.coefficients.Shape[0]
 		if coeffLen%input.Shape[1] != 0 {
 			return fmt.Errorf("coefficient length %d should be divisible by intercepts length %d", coeffLen, input.Shape[1])
 		}
-		l.coefficients.Shape = []int{coeffLen / input.Shape[1], input.Shape[1]}
+		num_targets = coeffLen / input.Shape[1]
+		l.coefficients.Shape = []int{num_targets, input.Shape[1]}
 	} else if input.Shape[1] != l.coefficients.Shape[1] {
 		return fmt.Errorf("input with shape %v cannot be multiplied with coeffiecient of shape %v", input.Shape, l.coefficients.Shape)
 	}
 
-	num_classes := l.coefficients.Shape[0]
 	num_batches := input.Shape[0]
 
-	var labels *tensor.Tensor
-	if l.classlabel != nil {
-		labels, err = k.Output(l.outputs[0], []int{num_batches}, tensor.Int64)
-		if err != nil {
-			return err
-		}
+	var output_dtype tensor.DataType
+	if l.using_strings {
+		output_dtype = tensor.String
 	} else {
-		return errors.ErrUnsupported
+		output_dtype = tensor.Int64
 	}
-	scores, err := k.Output(l.outputs[1], []int{num_batches, num_classes}, tensor.Double)
+	labels, err := k.Output(l.outputs[0], []int{num_batches}, output_dtype)
+	if err != nil {
+		return err
+	}
+
+	output_classes := num_targets
+	add_second_class := false
+	if num_targets == 1 && ((l.using_strings && len(l.classlabel_string) == 2) || (!l.using_strings && len(l.classlabel) == 2)) {
+		output_classes = 2
+		add_second_class = true
+	}
+	scores, err := k.Output(l.outputs[1], []int{num_batches, output_classes}, tensor.Double)
 	if err != nil {
 		return err
 	}
 	input.Cast(tensor.Double)
+	if add_second_class {
+		scores.Shape = []int{num_batches, output_classes}
+	}
 	scores, err = input.Dot(l.coefficients, scores)
 	if err != nil {
 		return err
@@ -120,7 +137,39 @@ func (l *LinearClassifier) Compute(k *kernel.Kernel) error {
 		}
 	}
 
-	if l.classlabel != nil {
+	if num_targets == 1 {
+		if l.using_strings {
+			use_class_labels := len(l.classlabel_string) == 2
+			positive_label := []byte("1")
+			negative_label := []byte("0")
+			if use_class_labels {
+				positive_label = l.classlabel_string[1]
+				negative_label = l.classlabel_string[0]
+			}
+			for d := range scores.Shape[0] {
+				if scores.DoubleData[d] > 0 {
+					labels.StringData[d] = positive_label
+				} else {
+					labels.StringData[d] = negative_label
+				}
+			}
+		} else {
+			use_class_labels := len(l.classlabel) == 2
+			positive_label := int64(1)
+			negative_label := int64(0)
+			if use_class_labels {
+				positive_label = l.classlabel[1]
+				negative_label = l.classlabel[0]
+			}
+			for d := range scores.Shape[0] {
+				if scores.DoubleData[d] > 0 {
+					labels.Int64Data[d] = positive_label
+				} else {
+					labels.Int64Data[d] = negative_label
+				}
+			}
+		}
+	} else {
 		for d := range scores.Shape[0] {
 			max_class := 0
 			row := d * scores.Shape[1]
@@ -131,7 +180,11 @@ func (l *LinearClassifier) Compute(k *kernel.Kernel) error {
 					max_weight = scores.DoubleData[row+i]
 				}
 			}
-			labels.Int64Data[d] = l.classlabel[max_class]
+			if l.using_strings {
+				labels.StringData[d] = l.classlabel_string[max_class]
+			} else {
+				labels.Int64Data[d] = l.classlabel[max_class]
+			}
 		}
 	}
 

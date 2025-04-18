@@ -25,22 +25,23 @@ type Graph struct {
 	kernel  *kernel.Kernel
 }
 
-func (g *Graph) Init(graphProto *ir.GraphProto) {
+func (g *Graph) Init(graphProto *ir.GraphProto) error {
 	g.graph = graphProto
 	g.kernel = &kernel.Kernel{}
 	g.kernel.Init()
 	err := g.setInputsTensor()
 	if err != nil {
-		panic(err)
+		return err
 	}
 	err = g.initializeNodes()
 	if err != nil {
-		panic(err)
+		return err
 	}
 	err = g.setOutputIndices()
 	if err != nil {
-		panic(err)
+		return err
 	}
+	return nil
 }
 
 func (g *Graph) setInputsTensor() error {

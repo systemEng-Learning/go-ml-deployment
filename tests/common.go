@@ -11,16 +11,17 @@ import (
 )
 
 type SingleNodeGraph struct {
-	graph      *ir.GraphProto
+	onnxGraph  *ir.GraphProto
 	inputs     []any
 	outputs    []any
 	errorBound float64
+	graph      *graph.Graph
 }
 
 func Test(nodeName string) *SingleNodeGraph {
 	sg := SingleNodeGraph{}
-	sg.graph = &ir.GraphProto{}
-	sg.graph.Node = append(sg.graph.Node, &ir.NodeProto{OpType: nodeName})
+	sg.onnxGraph = &ir.GraphProto{}
+	sg.onnxGraph.Node = append(sg.onnxGraph.Node, &ir.NodeProto{OpType: nodeName})
 	return &sg
 }
 
@@ -40,7 +41,7 @@ func (sg *SingleNodeGraph) addAttribute(name string, value any) {
 	default:
 		log.Fatalf("unsupported type for %v", item)
 	}
-	sg.graph.Node[0].Attribute = append(sg.graph.Node[0].Attribute, &attr)
+	sg.onnxGraph.Node[0].Attribute = append(sg.onnxGraph.Node[0].Attribute, &attr)
 }
 
 func (sg *SingleNodeGraph) addInput(name string, shape []int, value any) {
@@ -70,23 +71,38 @@ func (sg *SingleNodeGraph) addInput(name string, shape []int, value any) {
 	}
 	input.Type = &ir.TypeProto{}
 	input.Type.Value = &tt
-	sg.graph.Input = append(sg.graph.Input, &input)
-	sg.graph.Node[0].Input = append(sg.graph.Node[0].Input, name)
+	sg.onnxGraph.Input = append(sg.onnxGraph.Input, &input)
+	sg.onnxGraph.Node[0].Input = append(sg.onnxGraph.Node[0].Input, name)
+}
+
+func (sg *SingleNodeGraph) setInput(index int, value any) {
+	sg.inputs[index] = value
 }
 
 func (sg *SingleNodeGraph) addOutput(name string, value any) {
 	output := ir.ValueInfoProto{Name: name}
-	sg.graph.Output = append(sg.graph.Output, &output)
-	sg.graph.Node[0].Output = append(sg.graph.Node[0].Output, name)
+	sg.onnxGraph.Output = append(sg.onnxGraph.Output, &output)
+	sg.onnxGraph.Node[0].Output = append(sg.onnxGraph.Node[0].Output, name)
 	sg.outputs = append(sg.outputs, value)
 }
 
-func (sg *SingleNodeGraph) Execute(t *testing.T) {
+func (sg *SingleNodeGraph) InitOnly() error {
 	graph := graph.Graph{}
-	graph.Init(sg.graph)
-	outputs, err := graph.Execute(sg.inputs)
+	err := graph.Init(sg.onnxGraph)
 	if err != nil {
-		t.Fatalf("error thrown while executing graph: %v", err)
+		return err
+	}
+	sg.graph = &graph
+	return nil
+}
+
+func (sg *SingleNodeGraph) RunOnly(t testing.TB, bench bool) error {
+	outputs, err := sg.graph.Execute(sg.inputs)
+	if err != nil {
+		return err
+	}
+	if bench {
+		return nil
 	}
 	for i := range outputs {
 		switch item := outputs[i].(type) {
@@ -139,4 +155,14 @@ func (sg *SingleNodeGraph) Execute(t *testing.T) {
 			}
 		}
 	}
+	return nil
+}
+
+func (sg *SingleNodeGraph) Execute(t testing.TB) error {
+	err := sg.InitOnly()
+	if err != nil {
+		return err
+	}
+	err = sg.RunOnly(t, false)
+	return err
 }

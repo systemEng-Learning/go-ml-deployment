@@ -1,6 +1,8 @@
 package tests
 
-import "testing"
+import (
+	"testing"
+)
 
 type ValidInputTypes interface {
 	int32 | int64 | float32 | float64
@@ -51,6 +53,30 @@ func TestLinearClassifierMultiClassProbSigmoid(t *testing.T) {
 	sg.addAttribute("classlabels_ints", classes)
 	sg.addAttribute("multi_class", multiclass)
 	sg.addAttribute("post_transform", []byte("LOGISTIC"))
+
+	sg.addInput("X", []int{3, 2}, inputs)
+	sg.addOutput("Y", predicted_class)
+	sg.addOutput("Z", predictions)
+	sg.errorBound = 0.00001
+	sg.Execute(t)
+}
+
+func TestLinearClassifierMultiClassNoIntercepts(t *testing.T) {
+	sg := Test("LinearClassifier")
+	coefficients := []float32{-0.22562418, 0.34188559, 0.68346153,
+		-0.68051993, -0.1975279, 0.03748541}
+	classes := []int64{1, 2, 3}
+	multiclass := int64(0)
+	inputs := [][]float32{{1, 0}, {3, 44}, {23, 11.3}}
+	predictions := [][]float32{
+		{-0.22562417, 0.68346155, -0.1975279},
+		{14.366094, -27.892492, 1.0567744},
+		{-1.3260487, 8.02974, -4.1195564},
+	}
+	predicted_class := []int64{2, 1, 2}
+	sg.addAttribute("coefficients", coefficients)
+	sg.addAttribute("classlabels_ints", classes)
+	sg.addAttribute("multi_class", multiclass)
 
 	sg.addInput("X", []int{3, 2}, inputs)
 	sg.addOutput("Y", predicted_class)
@@ -189,5 +215,96 @@ func TestLinearClassifierTransforms(t *testing.T) {
 		sg.addOutput("Z", v.predictions)
 		sg.errorBound = 0.00001
 		sg.Execute(t)
+	}
+}
+
+func TestLinearClassifierCoeffiecientInterceptsShapeMismatch(t *testing.T) {
+	sg := Test("LinearClassifier")
+	coefficients := []float32{-0.22562418, 0.34188559, 0.68346153,
+		-0.68051993, -0.1975279, 0.03748541}
+	classes := []int64{1, 2, 3}
+	multiclass := int64(0)
+	inputs := [][]float32{{1, 0}, {3, 44}, {23, 11.3}}
+	intercepts := []float32{-3.91601811, 0.42575697, 0.13731251, 0.332}
+	sg.addAttribute("coefficients", coefficients)
+	sg.addAttribute("intercepts", intercepts)
+	sg.addAttribute("classlabels_ints", classes)
+	sg.addAttribute("multi_class", multiclass)
+
+	sg.addInput("X", []int{3, 2}, inputs)
+	err := sg.Execute(t)
+	if err == nil {
+		t.Fatal("expected error")
+	}
+}
+
+func TestLinearClassifierInputCoefficientShapeMismatch(t *testing.T) {
+	sg := Test("LinearClassifier")
+	coefficients := []float32{-0.22562418, 0.34188559, 0.68346153,
+		-0.68051993, -0.1975279, 0.03748541}
+	classes := []int64{1, 2, 3}
+	multiclass := int64(0)
+	inputs := [][]float32{{1, 0, 5}, {3, 44, 6}, {23, 11.3, 8}}
+	intercepts := []float32{-3.91601811, 0.42575697, 0.13731251}
+	sg.addAttribute("coefficients", coefficients)
+	sg.addAttribute("intercepts", intercepts)
+	sg.addAttribute("classlabels_ints", classes)
+	sg.addAttribute("multi_class", multiclass)
+
+	sg.addInput("X", []int{3, 2}, inputs)
+	err := sg.Execute(t)
+	if err == nil {
+		t.Fatal("expected error")
+	}
+}
+
+func TestLinearClassifierInputCoefficientShapeMismatchNoIntercepts(t *testing.T) {
+	sg := Test("LinearClassifier")
+	coefficients := []float32{-0.22562418, 0.34188559, 0.68346153,
+		-0.68051993, -0.1975279, 0.03748541}
+	classes := []int64{1, 2, 3}
+	multiclass := int64(0)
+	inputs := [][]float32{{1, 0, 5, 6}, {3, 44, 8, 17}, {23, 11.3, 13, 12}}
+	sg.addAttribute("coefficients", coefficients)
+	sg.addAttribute("classlabels_ints", classes)
+	sg.addAttribute("multi_class", multiclass)
+
+	sg.addInput("X", []int{3, 4}, inputs)
+	sg.errorBound = 0.00001
+	err := sg.Execute(t)
+	if err == nil {
+		t.Fatal("expected error")
+	}
+}
+
+func BenchmarkLinearClassifier(b *testing.B) {
+	sg := Test("LinearClassifier")
+	coefficients := []float32{-0.22562418, 0.34188559, 0.68346153,
+		-0.68051993, -0.1975279, 0.03748541}
+	classes := []int64{1, 2, 3}
+	multiclass := int64(0)
+	predictions := [][]float32{
+		{-4.14164229, 1.1092185, -0.06021539},
+		{10.45007543, -27.46673545, 1.19408663},
+		{-5.24206713, 8.45549693, -3.98224414},
+	}
+	intercepts := []float32{-3.91601811, 0.42575697, 0.13731251}
+	predicted_class := []int64{2, 1, 2}
+	sg.addAttribute("coefficients", coefficients)
+	sg.addAttribute("intercepts", intercepts)
+	sg.addAttribute("classlabels_ints", classes)
+	sg.addAttribute("multi_class", multiclass)
+
+	sg.addInput("X", []int{-1, 2}, []float32{})
+	sg.addOutput("Y", predicted_class)
+	sg.addOutput("Z", predictions)
+	sg.errorBound = 0.00001
+	inputs := [][]float32{{1, 0}, {3, 44}, {23, 11.3}, {12, 10}, {1, 0}, {3, 44}, {23, 11.3}, {12, 10}}
+	sg.InitOnly()
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		j := (i % 2) * 4
+		sg.setInput(0, inputs[j:j+4])
+		sg.RunOnly(b, true)
 	}
 }

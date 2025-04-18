@@ -27,8 +27,8 @@ func Logistic[T Float32_64](data []T) {
 
 func ComputeLogistic(val float64) float64 {
 	v := (1.0 / (1.0 + math.Exp(-val)))
-	if val < 0 {
+	if v < 0 {
 		return 1.0 - v
 	}
-	return val
+	return v
 }

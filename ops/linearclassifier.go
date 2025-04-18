@@ -121,6 +121,7 @@ func (l *LinearClassifier) Compute(k *kernel.Kernel) error {
 		return err
 	}
 	input.Cast(tensor.Double)
+	scores.Shape = []int{num_batches, num_targets}
 	scores, err = input.Dot(l.coefficients, scores)
 	if err != nil {
 		return err
@@ -184,6 +185,7 @@ func (l *LinearClassifier) Compute(k *kernel.Kernel) error {
 		}
 	}
 	if l.post_transform != "NONE" || add_second_class {
+		scores.Shape = []int{num_batches, output_classes}
 		to_add := -1
 		if add_second_class {
 			to_add = 1

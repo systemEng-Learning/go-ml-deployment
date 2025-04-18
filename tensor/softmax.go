@@ -12,9 +12,9 @@ func (t *Tensor) SoftmaxInPlace() error {
 
 	switch t.DType {
 	case Float:
-		SoftMax(t.Shape, t.FloatData)
+		SoftMax(t.FloatData, t.Shape)
 	case Double:
-		SoftMax(t.Shape, t.DoubleData)
+		SoftMax(t.DoubleData, t.Shape)
 	}
 	return nil
 }
@@ -23,8 +23,8 @@ type Float32_64 interface {
 	float32 | float64
 }
 
-func SoftMax[T Float32_64](shape []int, data []T) {
-	for i :=0; i < shape[0]; i++ {
+func SoftMax[T Float32_64](data []T, shape []int) {
+	for i := 0; i < shape[0]; i++ {
 		start := i * shape[1]
 		end := start + shape[1]
 		row := data[start:end]

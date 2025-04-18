@@ -21,12 +21,14 @@ func (t *Tensor) LogisticInPlace() error {
 
 func Logistic[T Float32_64](data []T) {
 	for i := range data {
-		 
-		val := T(1.0 / (1.0 + math.Exp(-float64(data[i]))))
-		if val < 0 {
-			data[i] = 1.0 - val
-		} else {
-			data[i] = val
-		}
+		data[i] = T(ComputeLogistic(float64(data[i])))
 	}
+}
+
+func ComputeLogistic(val float64) float64 {
+	v := (1.0 / (1.0 + math.Exp(-val)))
+	if val < 0 {
+		return 1.0 - v
+	}
+	return val
 }

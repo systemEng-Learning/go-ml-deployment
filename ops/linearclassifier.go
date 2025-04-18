@@ -1,7 +1,6 @@
 package ops
 
 import (
-	"errors"
 	"fmt"
 
 	"github.com/systemEng-Learning/go-ml-deployment/ir"
@@ -122,9 +121,6 @@ func (l *LinearClassifier) Compute(k *kernel.Kernel) error {
 		return err
 	}
 	input.Cast(tensor.Double)
-	if add_second_class {
-		scores.Shape = []int{num_batches, output_classes}
-	}
 	scores, err = input.Dot(l.coefficients, scores)
 	if err != nil {
 		return err
@@ -187,11 +183,12 @@ func (l *LinearClassifier) Compute(k *kernel.Kernel) error {
 			}
 		}
 	}
-
-	if l.post_transform == "SOFTMAX" {
-		scores.SoftmaxInPlace()
-	} else if l.post_transform != "NONE" {
-		return errors.ErrUnsupported
+	if l.post_transform != "NONE" || add_second_class {
+		to_add := -1
+		if add_second_class {
+			to_add = 1
+		}
+		update_scores(scores.DoubleData, []int{num_batches, num_targets}, l.post_transform, to_add, false)
 	}
 	scores.Cast(tensor.Float)
 	return nil

@@ -44,9 +44,9 @@ type Tensor struct {
 	Int32Data  []int32
 	Int64Data  []int64
 	DoubleData []float64
+	StringData [][]byte
 	IntMap     []map[int]float32
 	StringMap  []map[string]float32
-	StringData [][]byte
 }
 
 func (t *Tensor) Clone() (*Tensor, error) {

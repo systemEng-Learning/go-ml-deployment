@@ -106,7 +106,7 @@ func (k *Kernel) Output(index int, shape []int, dtype tensors.DataType) (*tensor
 		capacity := 0
 		if dtype == t.DType || (t.DType == tensors.Double && dtype == tensors.Float) ||
 			(t.DType == tensors.Float && dtype == tensors.Double) || (t.DType == tensors.Int64 && dtype == tensors.Int32) ||
-			(t.DType == tensors.Int32 && dtype == tensors.Int64) || (dtype == tensors.String) {
+			(t.DType == tensors.Int32 && dtype == tensors.Int64) {
 			t.DType = dtype
 			capacity = t.Capacity()
 		} else {

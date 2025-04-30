@@ -80,6 +80,10 @@ func (t *TreeEnsembleRegressor) Compute(k *kernel.Kernel) error {
 						return fmt.Errorf("target id %d is out of bounds for target labels", targetID)
 					}
 					resIdx := i*nTargets + int(targetID)
+					if len(t.tree.Atts.aggregate_function) == 0 {
+						t.tree.Atts.aggregate_function = "SUM"
+
+					}
 					switch t.tree.Atts.aggregate_function {
 					case "SUM", "AVERAGE":
 						res.FloatData[resIdx] += t.tree.Atts.target_weights.FloatData[it]

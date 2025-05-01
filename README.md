@@ -1,5 +1,6 @@
 # go-ml-deployment
 
+![ChatGPT Image May 1, 2025, 09_40_12 AM](https://github.com/user-attachments/assets/9d9be8ec-66a1-4cf4-a371-a81429447eee)
 
 ## Project Objectives
 

@@ -55,10 +55,7 @@ func (g *Graph) setInputsTensor() error {
 		if err != nil {
 			return err
 		}
-		if len(shape) == 1 && shape[0] != -1 {
-			shape = append(shape, shape[0])
-			shape[0] = 1
-		} else if len(shape) > 2 {
+		if len(shape) > 2 {
 			return fmt.Errorf("graph setinputtensor: want inputs of at most 2 dimensions, got %d", len(shape))
 		}
 		dtype := tensors.OnnxTypeToDtype(t.TensorType.ElemType)

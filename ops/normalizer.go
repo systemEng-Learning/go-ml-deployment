@@ -95,7 +95,7 @@ func normalize[T tensor.Numeric](input []T, output []float32, rows, cols int, no
 
 func normalizeMax[T tensor.Numeric](input []T, output []float32, rows, cols int) {
 	for i := range rows {
-		largest := float32(math.SmallestNonzeroFloat32)
+		largest := float32(-3.40282e+38) // Gotten from C++ limits header cus golang's limit is a crackhead
 		for j := range cols {
 			largest = max(largest, float32(input[i*cols+j]))
 		}

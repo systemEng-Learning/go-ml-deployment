@@ -41,8 +41,8 @@ type TreeEnsembleAttributes struct {
 	target_ids                      []int64
 	target_weights                  *tensor.Tensor
 	target_weights_as_tensor        *tensor.Tensor
-	n_target                        int64
-	aggregate_function              []byte
+	n_targets                        int64
+	aggregate_function              string
 }
 
 func removeDuplicatesAndSort(input []int64) []int64 {
@@ -170,10 +170,10 @@ func (t *TreeEnsemble) Init(node *ir.NodeProto) error {
 				return fmt.Errorf("failed to create tensor from target_weights_as_tensor: %v", err)
 			}
 			t.Atts.target_weights_as_tensor = target_weights_tensor
-		case "n_target":
-			t.Atts.n_target = attr.I
+		case "n_targets":
+			t.Atts.n_targets = attr.I
 		case "aggregate_function":
-			t.Atts.aggregate_function = attr.Strings[0]
+			t.Atts.aggregate_function = string(attr.S)
 		default:
 			return fmt.Errorf("unsupported attribute: %s", attr.Name)
 		}

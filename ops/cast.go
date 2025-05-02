@@ -1,7 +1,6 @@
 package ops
 
 import (
-	"errors"
 	"fmt"
 
 	"github.com/systemEng-Learning/go-ml-deployment/ir"
@@ -45,16 +44,16 @@ func (c *Cast) Compute(k *kernel.Kernel) error {
 	if err != nil {
 		return err
 	}
-	if input.DType != c.to {
-		return errors.ErrUnsupported
-	}
+
 	if data.Readers == 1 {
 		// Just place input in output
+		input.Cast(c.to)
 		err = k.Put(c.output, input)
 	} else {
 		// We are not the only reader, so clone
 		var output *tensor.Tensor
 		output, err = input.Clone()
+		output.Cast(c.to)
 		if err != nil {
 			return err
 		}

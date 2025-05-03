@@ -36,6 +36,11 @@ func (sg *SingleNodeGraph) addAttribute(name string, value any) {
 		attr.Ints = item
 	case []float32:
 		attr.Floats = item
+	case []string:
+		attr.Strings = make([][]byte, len(item))
+		for i := range item {
+			attr.Strings[i] = []byte(item[i])
+		}
 	case [][]byte:
 		attr.Strings = item
 	default:
@@ -149,6 +154,24 @@ func (sg *SingleNodeGraph) RunOnly(t testing.TB, bench bool) error {
 			for x := range o {
 				for y := range o[x] {
 					if math.Abs(o[x][y]-item[x][y]) >= sg.errorBound {
+						t.Fatalf("expected %v, got %v", o, item)
+					}
+				}
+			}
+		case []map[int]float32:
+			o := sg.outputs[i].([]map[int]float32)
+			for x := range o {
+				for k, v := range o[x] {
+					if math.Abs(float64(v-item[x][k])) >= sg.errorBound {
+						t.Fatalf("expected %v, got %v", o, item)
+					}
+				}
+			}
+		case []map[string]float32:
+			o := sg.outputs[i].([]map[string]float32)
+			for x := range o {
+				for k, v := range o[x] {
+					if math.Abs(float64(v-item[x][k])) >= sg.errorBound {
 						t.Fatalf("expected %v, got %v", o, item)
 					}
 				}

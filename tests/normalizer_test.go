@@ -5,7 +5,7 @@ import (
 )
 
 type normalizerInput interface {
-	float32 | []float32 | []float64 | []int32
+	float32 | float64 | int32
 }
 
 type outputType interface {
@@ -43,7 +43,7 @@ func TestNormalizer(t *testing.T) {
 
 func TestNormalizer2DFloats(t *testing.T) {
 	shape := []int{2, 3}
-	input := [][]float32{{-1.0856306, 0.99734545, 0.2829785}, {-1.50629471, -0.57860025, 1.65143654}}
+	input := []float32{-1.0856306, 0.99734545, 0.2829785, -1.50629471, -0.57860025, 1.65143654}
 
 	max_output := [][]float32{{-1.0885202, 1, 0.2837317}, {-0.91211176, -0.35036176, 1}}
 	l1_output := [][]float32{{-0.45885524, 0.42154038, 0.11960436}, {-0.40314806, -0.15485784, 0.44199413}}
@@ -53,7 +53,7 @@ func TestNormalizer2DFloats(t *testing.T) {
 
 func TestNormalizer2DDoubles(t *testing.T) {
 	shape := []int{2, 3}
-	input := [][]float64{{-1.0856306, 0.99734545, 0.2829785}, {-1.50629471, -0.57860025, 1.65143654}}
+	input := []float64{-1.0856306, 0.99734545, 0.2829785, -1.50629471, -0.57860025, 1.65143654}
 
 	max_output := [][]float32{{-1.0885202, 1, 0.2837317}, {-0.91211176, -0.35036176, 1}}
 	l1_output := [][]float32{{-0.45885524, 0.42154038, 0.11960436}, {-0.40314806, -0.15485784, 0.44199413}}
@@ -63,7 +63,7 @@ func TestNormalizer2DDoubles(t *testing.T) {
 
 func TestNormalizer2DInt32s(t *testing.T) {
 	shape := []int{3, 2}
-	input := [][]int32{{-242, -42}, {126, -86}, {-67, -9}}
+	input := []int32{-242, -42, 126, -86, -67, -9}
 	max_output := [][]float32{{5.7619047, 1}, {1, -0.6825397}, {7.4444447, 1}}
 	l1_output := [][]float32{{-0.85211265, -0.14788732}, {0.5943396, -0.4056604}, {-0.8815789, -0.11842106}}
 	l2_output := [][]float32{{-0.98527145, -0.17099753}, {0.82594985, -0.56374353}, {-0.9910982, -0.13313259}}

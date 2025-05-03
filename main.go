@@ -54,7 +54,7 @@ func printOutput(output []any) {
 	for _, item := range output {
 		switch item := item.(type) {
 		case []float32, [][]float32, []float64, [][]float64, []int32, [][]int32,
-			[]int64, [][]int64, map[int]float32, []map[string]float32:
+			[]int64, [][]int64, []map[int]float32, []map[string]float32:
 			fmt.Println(item)
 		default:
 			fmt.Println("Unsupported")

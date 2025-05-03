@@ -84,7 +84,7 @@ func (g *Graph) getOutputs() []any {
 			}
 			result[index] = stringArr
 		case tensors.IntMap:
-			mapSlice := make([]map[int]float32, tensor.Shape[0])
+			mapSlice := make([]map[int64]float32, tensor.Shape[0])
 			for i := range mapSlice {
 				mapSlice[i] = maps.Clone(tensor.IntMap[i])
 			}

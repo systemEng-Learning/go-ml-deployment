@@ -81,9 +81,9 @@ func (z *ZipMap) Compute(k *kernel.Kernel) error {
 			return err
 		}
 		for i := range rows {
-			output.IntMap[i] = make(map[int]float32)
+			output.IntMap[i] = make(map[int64]float32)
 			for j := range cols {
-				output.IntMap[i][int(z.classlabels_int64s[j])] = input.FloatData[i*cols+j]
+				output.IntMap[i][z.classlabels_int64s[j]] = input.FloatData[i*cols+j]
 			}
 		}
 	}

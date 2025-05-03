@@ -3,7 +3,7 @@ package tests
 import "testing"
 
 type maptype interface {
-	int | string
+	int64 | string
 }
 
 func runzipmap[T maptype](t *testing.T, classes []T, mtype string, shape []int, expect_success bool) {
@@ -42,4 +42,28 @@ func runzipmap[T maptype](t *testing.T, classes []T, mtype string, shape []int, 
 
 func TestZipMapStringFloat(t *testing.T) {
 	runzipmap(t, []string{"class1", "class2", "class3"}, "string", []int{2, 3}, true)
+}
+
+func TestZipMapIntFloat(t *testing.T) {
+	runzipmap(t, []int64{10, 20, 30}, "int64", []int{2, 3}, true)
+}
+
+func TestZipMapIntFloat1D(t *testing.T) {
+	runzipmap(t, []int64{10, 20, 30, 40, 50, 60}, "int64", []int{6}, true)
+}
+
+func TestZipMapStringFloatColMoreThanLabels(t *testing.T) {
+	runzipmap(t, []string{"class1", "class2", "class3"}, "string", []int{1, 6}, false)
+}
+
+func TestZipMapStringFloatColLessThanLabels(t *testing.T) {
+	runzipmap(t, []string{"class1", "class2", "class3"}, "string", []int{3, 2}, false)
+}
+
+func TestZipMapIntFloatColMoreThanLabels(t *testing.T) {
+	runzipmap(t, []int64{10, 20, 30}, "int64", []int{1, 6}, false)
+}
+
+func TestZipMapIntFloatColLessThanLabels(t *testing.T) {
+	runzipmap(t, []int64{10, 20, 30}, "int64", []int{3, 2}, false)
 }

@@ -126,7 +126,6 @@ func (g *Graph) initializeNodes() error {
 			err = tr.Init(g.kernel, node)
 			g.nodes = append(g.nodes, tr)
 		case "SVMRegressor":
-			fmt.Println("Hello")
 			tr := &ops.SVMRegressor{}
 			err = tr.Init(g.kernel, node)
 			g.nodes = append(g.nodes, tr)

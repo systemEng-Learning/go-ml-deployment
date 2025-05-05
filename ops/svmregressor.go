@@ -94,8 +94,6 @@ func (s *SVMRegressor) Init(k *kernel.Kernel, node *ir.NodeProto) error {
 }
 
 func (s *SVMRegressor) Compute(k *kernel.Kernel) error {
-	fmt.Println(s.coefficients)
-	fmt.Println(s.support_vector)
 	data, err := k.Input(s.input)
 	if err != nil {
 		return err

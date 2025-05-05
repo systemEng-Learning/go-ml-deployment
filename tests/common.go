@@ -11,11 +11,12 @@ import (
 )
 
 type SingleNodeGraph struct {
-	onnxGraph  *ir.GraphProto
-	inputs     []any
-	outputs    []any
-	errorBound float64
-	graph      *graph.Graph
+	onnxGraph     *ir.GraphProto
+	inputs        []any
+	expected      []any
+	errorBound    float64
+	isRelativeErr bool
+	graph         *graph.Graph
 }
 
 func Test(nodeName string) *SingleNodeGraph {
@@ -88,7 +89,7 @@ func (sg *SingleNodeGraph) addOutput(name string, value any) {
 	output := ir.ValueInfoProto{Name: name}
 	sg.onnxGraph.Output = append(sg.onnxGraph.Output, &output)
 	sg.onnxGraph.Node[0].Output = append(sg.onnxGraph.Node[0].Output, name)
-	sg.outputs = append(sg.outputs, value)
+	sg.expected = append(sg.expected, value)
 }
 
 func (sg *SingleNodeGraph) InitOnly() error {
@@ -112,66 +113,90 @@ func (sg *SingleNodeGraph) RunOnly(t testing.TB, bench bool) error {
 	for i := range outputs {
 		switch item := outputs[i].(type) {
 		case []int64:
-			o := sg.outputs[i].([]int64)
+			o := sg.expected[i].([]int64)
 			if !reflect.DeepEqual(o, item) {
 				t.Fatalf("expected %v, got %v", o, item)
 			}
 		case []string:
-			o := sg.outputs[i].([]string)
+			o := sg.expected[i].([]string)
 			if !reflect.DeepEqual(o, item) {
 				t.Fatalf("expected %v, got %v", o, item)
 			}
 		case []float32:
-			o := sg.outputs[i].([]float32)
+			o := sg.expected[i].([]float32)
 			for x := range o {
-				if math.Abs(float64(o[x]-item[x])) >= sg.errorBound {
+				var err float64 = sg.errorBound
+				if sg.isRelativeErr {
+					err *= math.Abs(float64(o[x]))
+				}
+				if math.Abs(float64(o[x]-item[x])) >= err {
 					t.Fatalf("expected %v, got %v", o, item)
 				}
 			}
 		case []float64:
-			o := sg.outputs[i].([]float64)
+			o := sg.expected[i].([]float64)
 			for x := range o {
-				if math.Abs(o[x]-item[x]) >= sg.errorBound {
+				var err float64 = sg.errorBound
+				if sg.isRelativeErr {
+					err *= math.Abs(o[x])
+				}
+				if math.Abs(o[x]-item[x]) >= err {
 					t.Fatalf("expected %v, got %v", o, item)
 				}
 			}
 		case [][]int64:
-			o := sg.outputs[i].([][]int64)
+			o := sg.expected[i].([][]int64)
 			if !reflect.DeepEqual(o, item) {
 				t.Fatalf("expected %v, got %v", o, item)
 			}
 		case [][]float32:
-			o := sg.outputs[i].([][]float32)
+			o := sg.expected[i].([][]float32)
 			for x := range o {
 				for y := range o[x] {
-					if math.Abs(float64(o[x][y]-item[x][y])) >= sg.errorBound {
+					var err float64 = sg.errorBound
+					if sg.isRelativeErr {
+						err *= math.Abs(float64(o[x][y]))
+					}
+					if math.Abs(float64(o[x][y]-item[x][y])) >= err {
 						t.Fatalf("expected %v, got %v", o, item)
 					}
 				}
 			}
 		case [][]float64:
-			o := sg.outputs[i].([][]float64)
+			o := sg.expected[i].([][]float64)
 			for x := range o {
 				for y := range o[x] {
-					if math.Abs(o[x][y]-item[x][y]) >= sg.errorBound {
+					var err float64 = sg.errorBound
+					if sg.isRelativeErr {
+						err *= math.Abs(o[x][y])
+					}
+					if math.Abs(o[x][y]-item[x][y]) >= err {
 						t.Fatalf("expected %v, got %v", o, item)
 					}
 				}
 			}
 		case []map[int]float32:
-			o := sg.outputs[i].([]map[int]float32)
+			o := sg.expected[i].([]map[int]float32)
 			for x := range o {
 				for k, v := range o[x] {
-					if math.Abs(float64(v-item[x][k])) >= sg.errorBound {
+					var err float64 = sg.errorBound
+					if sg.isRelativeErr {
+						err *= math.Abs(float64(v))
+					}
+					if math.Abs(float64(v-item[x][k])) >= err {
 						t.Fatalf("expected %v, got %v", o, item)
 					}
 				}
 			}
 		case []map[string]float32:
-			o := sg.outputs[i].([]map[string]float32)
+			o := sg.expected[i].([]map[string]float32)
 			for x := range o {
 				for k, v := range o[x] {
-					if math.Abs(float64(v-item[x][k])) >= sg.errorBound {
+					var err float64 = sg.errorBound
+					if sg.isRelativeErr {
+						err *= math.Abs(float64(v))
+					}
+					if math.Abs(float64(v-item[x][k])) >= err {
 						t.Fatalf("expected %v, got %v", o, item)
 					}
 				}

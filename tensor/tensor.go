@@ -185,6 +185,18 @@ func (t *Tensor) Alloc() {
 	}
 }
 
+func (t *Tensor) Reuse(shape []int) {
+	capacity := t.Capacity()
+	count := shape[0]
+	if len(shape) > 1 {
+		count *= shape[1]
+	}
+	t.Shape = shape
+	if capacity < count {
+		t.Alloc()
+	}
+}
+
 func (t *Tensor) rawData() any {
 	switch t.DType {
 	case Float:

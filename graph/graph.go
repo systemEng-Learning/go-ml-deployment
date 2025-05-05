@@ -125,6 +125,11 @@ func (g *Graph) initializeNodes() error {
 			tr := &ops.TreeEnsembleRegressor{}
 			err = tr.Init(g.kernel, node)
 			g.nodes = append(g.nodes, tr)
+		case "SVMRegressor":
+			fmt.Println("Hello")
+			tr := &ops.SVMRegressor{}
+			err = tr.Init(g.kernel, node)
+			g.nodes = append(g.nodes, tr)
 		default:
 			return fmt.Errorf("%s operation not supported", node.OpType)
 		}

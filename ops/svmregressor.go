@@ -16,17 +16,17 @@ const (
 )
 
 type SVMRegressor struct {
-	base           SVMBase
-	input          int
-	output         int
-	vector_count   int
-	feature_count  int
-	support_vector *tensor.Tensor
-	coefficients   *tensor.Tensor
-	temp           *tensor.Tensor
-	rho            float32
-	one_class      bool
-	mode           svmType
+	base            SVMBase
+	input           int
+	output          int
+	vector_count    int
+	feature_count   int
+	support_vectors *tensor.Tensor
+	coefficients    *tensor.Tensor
+	temp            *tensor.Tensor
+	rho             float32
+	one_class       bool
+	mode            svmType
 }
 
 func (s *SVMRegressor) Init(k *kernel.Kernel, node *ir.NodeProto) error {
@@ -40,7 +40,7 @@ func (s *SVMRegressor) Init(k *kernel.Kernel, node *ir.NodeProto) error {
 	for _, attr := range node.Attribute {
 		switch attr.Name {
 		case "coefficients":
-			s.coefficients = tensor.Create1DDoubleTensorFromFloat(attr.Floats)
+			s.coefficients = tensor.Create1DFloatTensor(attr.Floats)
 		case "kernel_params":
 			if len(attr.Floats) != 3 {
 				return fmt.Errorf("svmregressor: kernel_params must contain 3 values, only contains %d values", len(attr.Floats))
@@ -66,21 +66,22 @@ func (s *SVMRegressor) Init(k *kernel.Kernel, node *ir.NodeProto) error {
 		case "rho":
 			s.rho = attr.Floats[0]
 		case "support_vectors":
-			s.support_vector = tensor.Create1DDoubleTensorFromFloat(attr.Floats)
+			s.support_vectors = tensor.Create1DFloatTensor(attr.Floats)
 		default:
 			return fmt.Errorf("%s not supported for %s", attr.Name, node.OpType)
 		}
 	}
 
 	if s.vector_count > 0 {
-		if s.support_vector.Shape[0]%s.vector_count != 0 {
-			return fmt.Errorf("svmregressor: support_size %d should be divisible by vector count %d", s.support_vector.Shape[0], s.vector_count)
+		if s.support_vectors.Shape[0]%s.vector_count != 0 {
+			return fmt.Errorf("svmregressor: support_size %d should be divisible by vector count %d",
+				s.support_vectors.Shape[0], s.vector_count)
 		}
-		feature_count := s.support_vector.Shape[0] / s.vector_count
+		feature_count := s.support_vectors.Shape[0] / s.vector_count
 		if s.coefficients.Shape[0] != s.vector_count {
 			return fmt.Errorf("svmregressor: coefficient length (%d) != vector_count (%d)", s.coefficients.Shape[0], s.vector_count)
 		}
-		s.support_vector.Shape = []int{s.vector_count, feature_count}
+		s.support_vectors.Shape = []int{s.vector_count, feature_count}
 		s.feature_count = feature_count
 		s.mode = svmSvc
 	} else {
@@ -122,6 +123,7 @@ func (s *SVMRegressor) Compute(k *kernel.Kernel) error {
 	if err != nil {
 		return nil
 	}
+	input.Cast(tensor.Float)
 	if s.mode == svmSvc {
 		if s.temp == nil {
 			s.temp = &tensor.Tensor{
@@ -132,7 +134,7 @@ func (s *SVMRegressor) Compute(k *kernel.Kernel) error {
 		} else {
 			s.temp.Reuse([]int{num_batches, s.vector_count})
 		}
-		s.base.batched_kernel_dot(input, s.support_vector, s.temp, 0)
+		s.base.batched_kernel_dot(input, s.support_vectors, s.temp, 0)
 		s.temp.Dot(s.coefficients, output)
 		for i := range num_batches {
 			output.FloatData[i] = output.FloatData[i] + s.rho

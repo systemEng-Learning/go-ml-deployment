@@ -2,23 +2,41 @@ package ops
 
 import "github.com/systemEng-Learning/go-ml-deployment/tensor"
 
-func update_scores[T tensor.Float32_64](scores []T, shape []int, post_transform string, add_second_class int, have_space bool) {
+type postTransform int
+
+const (
+	NONE postTransform = iota
+	PROBIT
+	LOGISTIC
+	SOFTMAX
+	SOFTMAX_ZERO
+)
+
+var postTransformMap = map[string]postTransform{
+	"NONE":         NONE,
+	"PROBIT":       PROBIT,
+	"LOGISTIC":     LOGISTIC,
+	"SOFTMAX":      SOFTMAX,
+	"SOFTMAX_ZERO": SOFTMAX_ZERO,
+}
+
+func update_scores[T tensor.Float32_64](scores []T, shape []int, post_transform postTransform, add_second_class int, have_space bool) {
 	rows := shape[0]
 	cols := shape[1]
 	end := rows * cols
 	if cols > 1 {
 		switch post_transform {
-		case "PROBIT":
+		case PROBIT:
 			tensor.Probit(scores)
-		case "LOGISTIC":
+		case LOGISTIC:
 			tensor.Logistic(scores)
-		case "SOFTMAX":
+		case SOFTMAX:
 			tensor.SoftMax(scores, shape)
-		case "SOFTMAX_ZERO":
+		case SOFTMAX_ZERO:
 			tensor.SoftMaxZero(scores, shape)
 		}
 	} else {
-		if post_transform == "PROBIT" {
+		if post_transform == PROBIT {
 			for i := range end {
 				scores[i] = T(tensor.ComputeProbit(float64(scores[i])))
 			}
@@ -31,7 +49,7 @@ func update_scores[T tensor.Float32_64](scores []T, shape []int, post_transform 
 					scores[index+1] = score
 				}
 			} else if add_second_class == 2 {
-				if post_transform == "LOGISTIC" {
+				if post_transform == LOGISTIC {
 					update_scores = func(score T, index int) {
 						scores[index] = T(tensor.ComputeLogistic(float64(-score)))
 						scores[index+1] = T(tensor.ComputeLogistic(float64(score)))

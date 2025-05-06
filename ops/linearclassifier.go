@@ -17,7 +17,7 @@ type LinearClassifier struct {
 	coefficients      *tensor.Tensor
 	intercepts        *tensor.Tensor
 	multiclass        bool
-	post_transform    string
+	post_transform    postTransform
 	outputs           []int
 }
 
@@ -28,7 +28,7 @@ func (l *LinearClassifier) Init(k *kernel.Kernel, node *ir.NodeProto) error {
 	}
 	l.input = input
 	l.multiclass = false
-	l.post_transform = "NONE"
+	l.post_transform = NONE
 	using_strings := false
 
 	for _, attr := range node.Attribute {
@@ -47,7 +47,7 @@ func (l *LinearClassifier) Init(k *kernel.Kernel, node *ir.NodeProto) error {
 				l.multiclass = true
 			}
 		case "post_transform":
-			l.post_transform = string(attr.S)
+			l.post_transform = postTransformMap[string(attr.S)]
 		default:
 			return fmt.Errorf("%s not supported for %s", attr.Name, node.OpType)
 		}
@@ -184,7 +184,7 @@ func (l *LinearClassifier) Compute(k *kernel.Kernel) error {
 			}
 		}
 	}
-	if l.post_transform != "NONE" || add_second_class {
+	if l.post_transform != NONE || add_second_class {
 		scores.Shape = []int{num_batches, output_classes}
 		to_add := -1
 		if add_second_class {

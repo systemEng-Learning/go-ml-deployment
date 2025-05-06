@@ -197,6 +197,17 @@ func (t *Tensor) Reuse(shape []int) {
 	}
 }
 
+func (t *Tensor) IsEmpty() bool {
+	if len(t.Shape) == 0 {
+		return true
+	}
+	size := 1
+	for i := range t.Shape {
+		size *= t.Shape[i]
+	}
+	return size == 0
+}
+
 func (t *Tensor) rawData() any {
 	switch t.DType {
 	case Float:

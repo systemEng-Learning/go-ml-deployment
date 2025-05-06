@@ -37,6 +37,7 @@ func (s *SVMRegressor) Init(k *kernel.Kernel, node *ir.NodeProto) error {
 
 	s.input = input
 	s.base = SVMBase{}
+	var rho []float32
 	for _, attr := range node.Attribute {
 		switch attr.Name {
 		case "coefficients":
@@ -64,7 +65,7 @@ func (s *SVMRegressor) Init(k *kernel.Kernel, node *ir.NodeProto) error {
 		case "one_class":
 			s.one_class = (attr.I != 0)
 		case "rho":
-			s.rho = attr.Floats[0]
+			rho = attr.Floats
 		case "support_vectors":
 			s.support_vectors = tensor.Create1DFloatTensor(attr.Floats)
 		default:
@@ -72,6 +73,14 @@ func (s *SVMRegressor) Init(k *kernel.Kernel, node *ir.NodeProto) error {
 		}
 	}
 
+	if len(rho) == 0 {
+		return fmt.Errorf("svmregressor: rho attribute cannot be empty")
+	}
+
+	if s.coefficients == nil || s.coefficients.IsEmpty() {
+		return fmt.Errorf("svmregressor: coefficient attribute cannot be empty")
+	}
+	s.rho = rho[0]
 	if s.vector_count > 0 {
 		if s.support_vectors.Shape[0]%s.vector_count != 0 {
 			return fmt.Errorf("svmregressor: support_size %d should be divisible by vector count %d",

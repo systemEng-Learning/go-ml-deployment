@@ -212,7 +212,7 @@ func (s *SVMClassifier) Compute(k *kernel.Kernel) error {
 	have_proba := s.proba != nil
 	final_scores_per_batch := s.class_count
 	if s.mode == svmSvc && !have_proba {
-		if s.class_count > 0 {
+		if s.class_count > 2 {
 			final_scores_per_batch = num_classifiers
 		} else {
 			final_scores_per_batch = 2

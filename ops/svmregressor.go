@@ -134,15 +134,7 @@ func (s *SVMRegressor) Compute(k *kernel.Kernel) error {
 	}
 	input.Cast(tensor.Float)
 	if s.mode == svmSvc {
-		if s.temp == nil {
-			s.temp = &tensor.Tensor{
-				Shape: []int{num_batches, s.vector_count},
-				DType: tensor.Float,
-			}
-			s.temp.Alloc()
-		} else {
-			s.temp.Reuse([]int{num_batches, s.vector_count})
-		}
+		s.temp = tensor.CreateOrReuseTensor(s.temp, []int{num_batches, s.vector_count}, tensor.Float)
 		s.base.batched_kernel_dot(input, s.support_vectors, s.temp, 0)
 		s.temp.Dot(s.coefficients, output)
 		for i := range num_batches {

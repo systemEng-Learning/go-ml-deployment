@@ -123,6 +123,19 @@ func Create1DDoubleTensorFromFloat(data []float32) *Tensor {
 	return t
 }
 
+func CreateOrReuseTensor(t *Tensor, shape []int, dtype DataType) *Tensor {
+	if t == nil {
+		t = &Tensor{
+			Shape: shape,
+			DType: dtype,
+		}
+		t.Alloc()
+	} else {
+		t.Reuse(shape)
+	}
+	return t
+}
+
 func (t *Tensor) Clear() {
 	switch t.DType {
 	case Float:

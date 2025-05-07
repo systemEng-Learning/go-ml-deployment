@@ -28,6 +28,9 @@ type SVMClassifier struct {
 	post_transform           postTransform
 	weights_are_all_positive bool
 	kernels_data             *tensor.Tensor
+	probsp2_data             *tensor.Tensor
+	classifier_scores_data   *tensor.Tensor
+	votes_data               *tensor.Tensor
 	outputs                  []int
 }
 
@@ -235,11 +238,9 @@ func (s *SVMClassifier) Compute(k *kernel.Kernel) error {
 		return err
 	}
 
-	var votes_data []int64
 	var classifier_scores_data []float32
-	var probsp2_data []float32
 	if s.mode == svmSvc && have_proba {
-		probsp2_data = make([]float32, num_batches*class_count_squared)
+		s.probsp2_data = tensor.CreateOrReuseTensor(s.probsp2_data, []int{num_batches * class_count_squared}, tensor.Float)
 	}
 
 	write_additional_scores := -1
@@ -274,21 +275,14 @@ func (s *SVMClassifier) Compute(k *kernel.Kernel) error {
 
 		if have_proba {
 			// let's write to an intermediate buffer first
-			classifier_scores_data = make([]float32, num_batches*num_classifiers)
+			s.classifier_scores_data = tensor.CreateOrReuseTensor(s.classifier_scores_data, []int{num_batches * num_classifiers}, tensor.Float)
+			classifier_scores_data = s.classifier_scores_data.FloatData
 		} else {
 			// write directly to the final score output.
 			classifier_scores_data = final_scores.FloatData
 		}
-		if s.kernels_data == nil {
-			s.kernels_data = &tensor.Tensor{
-				Shape: []int{num_batches, s.vector_count},
-				DType: tensor.Float,
-			}
-			s.kernels_data.Alloc()
-		} else {
-			s.kernels_data.Reuse([]int{num_batches, s.vector_count})
-		}
-		votes_data = make([]int64, num_batches*s.class_count)
+		s.kernels_data = tensor.CreateOrReuseTensor(s.kernels_data, []int{num_batches, s.vector_count}, tensor.Float)
+		s.votes_data = tensor.CreateOrReuseTensor(s.votes_data, []int{num_batches * s.class_count}, tensor.Int64)
 
 		// combine the input data with the support vectors and apply the kernel type, write output to kernel
 		// input: [num_batches, feature_count]
@@ -300,7 +294,7 @@ func (s *SVMClassifier) Compute(k *kernel.Kernel) error {
 
 			cur_kernels := s.kernels_data.FloatData[n*s.vector_count:]
 			cur_scores := classifier_scores_data[n*num_slots_per_iteration:]
-			cur_votes := votes_data[n*s.class_count:]
+			cur_votes := s.votes_data.Int64Data[n*s.class_count:]
 			scores_iter := 0
 
 			classifier_idx := 0
@@ -355,7 +349,7 @@ func (s *SVMClassifier) Compute(k *kernel.Kernel) error {
 		cur_scores := final_scores.FloatData[n*final_scores_per_batch:]
 
 		if s.mode == svmSvc && have_proba {
-			probsp2 := probsp2_data[n*class_count_squared:]
+			probsp2 := s.probsp2_data.FloatData[n*class_count_squared:]
 			classifier_scores := classifier_scores_data[n*num_classifiers:]
 
 			index := 0
@@ -380,8 +374,8 @@ func (s *SVMClassifier) Compute(k *kernel.Kernel) error {
 
 		max_weight := float32(0)
 		maxclass := -1
-		if len(votes_data) > 0 {
-			votes := votes_data[n*s.class_count:]
+		if s.votes_data != nil && s.votes_data.Shape[0] > 0 {
+			votes := s.votes_data.Int64Data[n*s.class_count:]
 			max_votes := votes[0]
 			maxclass = 0
 			for i := 1; i < s.class_count; i++ {

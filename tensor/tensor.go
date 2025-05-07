@@ -123,6 +123,19 @@ func Create1DDoubleTensorFromFloat(data []float32) *Tensor {
 	return t
 }
 
+func CreateOrReuseTensor(t *Tensor, shape []int, dtype DataType) *Tensor {
+	if t == nil {
+		t = &Tensor{
+			Shape: shape,
+			DType: dtype,
+		}
+		t.Alloc()
+	} else {
+		t.Reuse(shape)
+	}
+	return t
+}
+
 func (t *Tensor) Clear() {
 	switch t.DType {
 	case Float:
@@ -183,6 +196,29 @@ func (t *Tensor) Alloc() {
 	case String:
 		t.StringData = make([][]byte, capacity)
 	}
+}
+
+func (t *Tensor) Reuse(shape []int) {
+	capacity := t.Capacity()
+	count := shape[0]
+	if len(shape) > 1 {
+		count *= shape[1]
+	}
+	t.Shape = shape
+	if capacity < count {
+		t.Alloc()
+	}
+}
+
+func (t *Tensor) IsEmpty() bool {
+	if len(t.Shape) == 0 {
+		return true
+	}
+	size := 1
+	for i := range t.Shape {
+		size *= t.Shape[i]
+	}
+	return size == 0
 }
 
 func (t *Tensor) rawData() any {

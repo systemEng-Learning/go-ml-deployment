@@ -10,7 +10,7 @@ import (
 )
 
 type Number interface {
-	int32 | int64 | int | float32 | float64
+	int32 | int64 | int | float32 | float64 |  map[int64]float32 | map[string]float32 | map[string]int64 | map[int64]string | map[int64]float64 | map[string]float64
 }
 
 type InputProcessor[T Number] struct {
@@ -20,7 +20,7 @@ type InputProcessor[T Number] struct {
 }
 
 func (ip *InputProcessor[T]) processStatic(v T, kernel *kernel.Kernel) error {
-	if ip.dtype == tensor.StringMap || ip.dtype == tensor.IntMap || ip.dtype == tensor.Undefined {
+	if ip.dtype == tensor.Undefined {
 		return fmt.Errorf("unsupported datatype: %s", ip.dtype)
 	}
 	shape := slices.Clone(ip.shape)
@@ -39,16 +39,32 @@ func (ip *InputProcessor[T]) processStatic(v T, kernel *kernel.Kernel) error {
 	if err != nil {
 		return err
 	}
-	switch ip.dtype {
-	case tensor.Float:
-		t.FloatData[0] = float32(v)
-	case tensor.Double:
-		t.DoubleData[0] = float64(v)
-	case tensor.Int32:
+
+	switch v := any(v).(type) {
+	case int32:
 		t.Int32Data[0] = int32(v)
-	case tensor.Int64:
+	case int64:
 		t.Int64Data[0] = int64(v)
+	case float32:
+		t.FloatData[0] = float32(v)
+	case float64:
+		t.DoubleData[0] = float64(v)
+	case map[int64]float32:
+		t.IntMap[0] = v
+	case map[string]float32:
+		t.StringMap[0] = v
+	case map[string]int64:
+		t.StringIntMap[0] = v
+	case map[int64]string:
+		t.IntStringMap[0] = v
+	case map[int64]float64:
+		t.IntDoubleMap[0] = v
+	case map[string]float64:
+		t.StringDoubleMap[0] = v
+	default:
+		return fmt.Errorf("unsupported data type: %v", reflect.TypeOf(v))
 	}
+
 	return nil
 }
 
@@ -81,24 +97,49 @@ func (ip *InputProcessor[T]) process1D(v []T, kernel *kernel.Kernel) error {
 		return err
 	}
 
-	switch ip.dtype {
-	case tensor.Float:
-		for i, val := range v {
-			t.FloatData[i] = float32(val)
-		}
-	case tensor.Double:
-		for i, val := range v {
-			t.DoubleData[i] = float64(val)
-		}
-	case tensor.Int32:
+	switch v := any(v).(type) {
+	case []int32:
 		for i, val := range v {
 			t.Int32Data[i] = int32(val)
 		}
-	case tensor.Int64:
+	case []int64:
 		for i, val := range v {
 			t.Int64Data[i] = int64(val)
 		}
+	case []float32:
+		for i, val := range v {
+			t.FloatData[i] = float32(val)
+		}
+	case []float64:
+		for i, val := range v {
+			t.DoubleData[i] = float64(val)
+		}
+	case []map[int64]float32:
+		for i, val := range v {
+			t.IntMap[i] = val
+		}
+	case []map[string]float32:
+		for i, val := range v {
+			t.StringMap[i] = val
+		}
+	case []map[string]int64:
+		for i, val := range v {
+			t.StringIntMap[i] = val
+		}
+	case []map[int64]string:
+		for i, val := range v {
+			t.IntStringMap[i] = val
+		}
+	case []map[int64]float64:
+		for i, val := range v {
+			t.IntDoubleMap[i] = val
+		}
+	case []map[string]float64:
+		for i, val := range v {
+			t.StringDoubleMap[i] = val
+		}
 	}
+
 	return nil
 }
 
@@ -130,32 +171,70 @@ func (ip *InputProcessor[T]) process2D(v [][]T, kernel *kernel.Kernel) error {
 		return err
 	}
 
-	switch ip.dtype {
-	case tensor.Float:
-		for x := range m {
-			for y := range n {
-				t.FloatData[x*n+y] = float32(v[x][y])
-			}
-		}
-	case tensor.Double:
-		for x := range m {
-			for y := range n {
-				t.DoubleData[x*n+y] = float64(v[x][y])
-			}
-		}
-	case tensor.Int32:
+	switch v := any(v).(type) {
+	case [][]int32:
 		for x := range m {
 			for y := range n {
 				t.Int32Data[x*n+y] = int32(v[x][y])
 			}
 		}
-	case tensor.Int64:
+	case [][]int64:
 		for x := range m {
 			for y := range n {
 				t.Int64Data[x*n+y] = int64(v[x][y])
 			}
 		}
+	case [][]float32:
+		for x := range m {
+			for y := range n {
+				t.FloatData[x*n+y] = float32(v[x][y])
+			}
+		}
+	case [][]float64:
+		for x := range m {
+			for y := range n {
+				t.DoubleData[x*n+y] = float64(v[x][y])
+			}
+		}
+	case [][]map[int64]float32:
+		for x := range m {
+			for y := range n {
+				t.IntMap[x*n+y] = v[x][y]
+			}
+		}
+	case [][]map[string]float32:
+		for x := range m {
+			for y := range n {
+				t.StringMap[x*n+y] = v[x][y]
+			}
+		}
+	case [][]map[string]int64:
+		for x := range m {
+			for y := range n {
+				t.StringIntMap[x*n+y] = v[x][y]
+			}
+		}
+	case [][]map[int64]string:
+		for x := range m {
+			for y := range n {
+				t.IntStringMap[x*n+y] = v[x][y]
+			}
+		}
+	case [][]map[int64]float64:
+		for x := range m {
+			for y := range n {
+				t.IntDoubleMap[x*n+y] = v[x][y]
+			}
+		}
+	case [][]map[string]float64:
+		for x := range m {
+			for y := range n {
+				t.StringDoubleMap[x*n+y] = v[x][y]
+			}
+		}
+
 	}
+
 	return nil
 }
 
@@ -199,6 +278,24 @@ func (g *Graph) setInputs(input []any) error {
 			err = ip.process1D(item, g.kernel)
 		case []float64:
 			ip := InputProcessor[float64]{index: index, shape: shape, dtype: dtype}
+			err = ip.process1D(item, g.kernel)
+		case []map[string]float32:
+			ip := InputProcessor[map[string]float32]{index: index, shape: shape, dtype: dtype}
+			err = ip.process1D(item, g.kernel)
+		case []map[int64]float32:
+			ip := InputProcessor[map[int64]float32]{index: index, shape: shape, dtype: dtype}
+			err = ip.process1D(item, g.kernel)
+		case []map[string]int64:
+			ip := InputProcessor[map[string]int64]{index: index, shape: shape, dtype: dtype}
+			err = ip.process1D(item, g.kernel)
+		case []map[int64]string:
+			ip := InputProcessor[map[int64]string]{index: index, shape: shape, dtype: dtype}
+			err = ip.process1D(item, g.kernel)
+		case []map[int64]float64:
+			ip := InputProcessor[map[int64]float64]{index: index, shape: shape, dtype: dtype}
+			err = ip.process1D(item, g.kernel)
+		case []map[string]float64:
+			ip := InputProcessor[map[string]float64]{index: index, shape: shape, dtype: dtype}
 			err = ip.process1D(item, g.kernel)
 		case [][]int32:
 			ip := InputProcessor[int32]{index: index, shape: shape, dtype: dtype}

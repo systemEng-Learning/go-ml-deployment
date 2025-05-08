@@ -69,11 +69,11 @@ func (ip *InputProcessor[T]) processStatic(v T, kernel *kernel.Kernel) error {
 }
 
 func (ip *InputProcessor[T]) process1D(v []T, kernel *kernel.Kernel) error {
-	if ip.dtype == tensor.StringMap || ip.dtype == tensor.IntMap || ip.dtype == tensor.Undefined {
+	if ip.dtype == tensor.Undefined {
 		return fmt.Errorf("unsupported datatype: %s", ip.dtype)
 	}
 	shape := slices.Clone(ip.shape)
-
+	
 	switch len(shape) {
 	case 1:
 		if shape[0] == -1 {

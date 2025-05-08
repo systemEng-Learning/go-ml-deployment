@@ -69,10 +69,7 @@ func (g *Graph) setInputsTensor() error {
 			elemTypeStr := ir.TensorProto_DataType_name[m.KeyType]
 			value :=m.GetValueType().GetValue()
 			t := value.(*ir.TypeProto_TensorType)
-			shape, err := getShape(t.TensorType.Shape)
-			if err != nil {
-				return err
-			}
+			
 			tensorType := ir.TensorProto_DataType_name[t.TensorType.ElemType]
 			tempdytpe := elemTypeStr + tensorType
 			var dtype tensors.DataType
@@ -94,7 +91,7 @@ func (g *Graph) setInputsTensor() error {
 			}
 			index := g.kernel.RegisterWriter(input.Name)
 			g.inputs[i] = index
-			g.shapes[i] = shape
+			g.shapes[i] = []int{-1}
 			g.dtypes[i] = dtype
 
 		}

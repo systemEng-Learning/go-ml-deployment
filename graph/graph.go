@@ -49,20 +49,56 @@ func (g *Graph) setInputsTensor() error {
 	g.shapes = make([][]int, len(g.graph.Input))
 	g.dtypes = make([]tensors.DataType, len(g.graph.Input))
 	for i, input := range g.graph.Input {
-		v := input.GetType().GetValue()
-		t := v.(*ir.TypeProto_TensorType)
-		shape, err := getShape(t.TensorType.Shape)
-		if err != nil {
-			return err
+		switch v := input.GetType().GetValue().(type) {
+		case *ir.TypeProto_TensorType:
+			t := v
+			shape, err := getShape(t.TensorType.Shape)
+			if err != nil {
+				return err
+			}
+			if len(shape) > 2 {
+				return fmt.Errorf("graph setinputtensor: want inputs of at most 2 dimensions, got %d", len(shape))
+			}
+			dtype := tensors.OnnxTypeToDtype(t.TensorType.ElemType)
+			index := g.kernel.RegisterWriter(input.Name)
+			g.inputs[i] = index
+			g.shapes[i] = shape
+			g.dtypes[i] = dtype
+		case *ir.TypeProto_MapType:
+			m := v.MapType
+			elemTypeStr := ir.TensorProto_DataType_name[m.KeyType]
+			value :=m.GetValueType().GetValue()
+			t := value.(*ir.TypeProto_TensorType)
+			shape, err := getShape(t.TensorType.Shape)
+			if err != nil {
+				return err
+			}
+			tensorType := ir.TensorProto_DataType_name[t.TensorType.ElemType]
+			tempdytpe := elemTypeStr + tensorType
+			var dtype tensors.DataType
+			switch tempdytpe {
+			case "STRINGFLOAT":
+				dtype = tensors.StringMap
+			case "STRINGDOUBLE":
+				dtype = tensors.StringDoubleMap
+			case "STRINGINT64":
+				dtype = tensors.StringIntMap
+			case "INT64FLOAT":
+				dtype = tensors.IntMap
+			case "INT64DOUBLE":
+				dtype = tensors.IntDoubleMap
+			case "INT64STRING":
+				dtype = tensors.IntStringMap
+			default:
+				return fmt.Errorf("graph setinputtensor: map type %s not supported", tempdytpe)
+			}
+			index := g.kernel.RegisterWriter(input.Name)
+			g.inputs[i] = index
+			g.shapes[i] = shape
+			g.dtypes[i] = dtype
+
 		}
-		if len(shape) > 2 {
-			return fmt.Errorf("graph setinputtensor: want inputs of at most 2 dimensions, got %d", len(shape))
-		}
-		dtype := tensors.OnnxTypeToDtype(t.TensorType.ElemType)
-		index := g.kernel.RegisterWriter(input.Name)
-		g.inputs[i] = index
-		g.shapes[i] = shape
-		g.dtypes[i] = dtype
+		
 	}
 	return nil
 }
@@ -133,6 +169,10 @@ func (g *Graph) initializeNodes() error {
 			tr := &ops.SVMClassifier{}
 			err = tr.Init(g.kernel, node)
 			g.nodes = append(g.nodes, tr)
+		case "DictVectorizer":
+			d := &ops.DictVectorizer{}
+			err = d.Init(g.kernel, node)
+			g.nodes = append(g.nodes, d)
 		default:
 			return fmt.Errorf("%s operation not supported", node.OpType)
 		}

@@ -57,7 +57,7 @@ type Tensor struct {
 	IntMap     []map[int64]float32
 	StringMap  []map[string]float32
 	StringIntMap  []map[string]int64
-	IntStringMap  []map[int64]string
+	IntStringMap  []map[int64][]byte
 	IntDoubleMap  []map[int64]float64
 	StringDoubleMap []map[string]float64
 }
@@ -123,7 +123,7 @@ func CreateEmptyTensor(shape []int, dataType DataType) *Tensor {
 	case StringIntMap:
 		t.StringIntMap = make([]map[string]int64, shape[0])
 	case IntStringMap:
-		t.IntStringMap = make([]map[int64]string, shape[0])
+		t.IntStringMap = make([]map[int64][]byte, shape[0])
 	case IntDoubleMap:
 		t.IntDoubleMap = make([]map[int64]float64, shape[0])
 	case StringDoubleMap:
@@ -243,7 +243,7 @@ func (t *Tensor) Alloc() {
 	case StringIntMap:
 		t.StringIntMap = make([]map[string]int64, t.Shape[0])
 	case IntStringMap:
-		t.IntStringMap = make([]map[int64]string, t.Shape[0])
+		t.IntStringMap = make([]map[int64][]byte, t.Shape[0])
 	case IntDoubleMap:
 		t.IntDoubleMap = make([]map[int64]float64, t.Shape[0])
 	case StringDoubleMap:

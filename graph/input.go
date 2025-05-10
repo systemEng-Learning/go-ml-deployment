@@ -10,7 +10,7 @@ import (
 )
 
 type Number interface {
-	int32 | int64 | int | float32 | float64 |  map[int64]float32 | map[string]float32 | map[string]int64 | map[int64]string | map[int64]float64 | map[string]float64
+	int32 | int64 | int | float32 | float64 |  map[int64]float32 | map[string]float32 | map[string]int64 | map[int64][]byte | map[int64]float64 | map[string]float64
 }
 
 type InputProcessor[T Number] struct {
@@ -55,7 +55,7 @@ func (ip *InputProcessor[T]) processStatic(v T, kernel *kernel.Kernel) error {
 		t.StringMap[0] = v
 	case map[string]int64:
 		t.StringIntMap[0] = v
-	case map[int64]string:
+	case map[int64][]byte:
 		t.IntStringMap[0] = v
 	case map[int64]float64:
 		t.IntDoubleMap[0] = v
@@ -126,7 +126,7 @@ func (ip *InputProcessor[T]) process1D(v []T, kernel *kernel.Kernel) error {
 		for i, val := range v {
 			t.StringIntMap[i] = val
 		}
-	case []map[int64]string:
+	case []map[int64][]byte:
 		for i, val := range v {
 			t.IntStringMap[i] = val
 		}
@@ -214,7 +214,7 @@ func (ip *InputProcessor[T]) process2D(v [][]T, kernel *kernel.Kernel) error {
 				t.StringIntMap[x*n+y] = v[x][y]
 			}
 		}
-	case [][]map[int64]string:
+	case [][]map[int64][]byte:
 		for x := range m {
 			for y := range n {
 				t.IntStringMap[x*n+y] = v[x][y]
@@ -288,8 +288,8 @@ func (g *Graph) setInputs(input []any) error {
 		case []map[string]int64:
 			ip := InputProcessor[map[string]int64]{index: index, shape: shape, dtype: dtype}
 			err = ip.process1D(item, g.kernel)
-		case []map[int64]string:
-			ip := InputProcessor[map[int64]string]{index: index, shape: shape, dtype: dtype}
+		case []map[int64][]byte:
+			ip := InputProcessor[map[int64][]byte]{index: index, shape: shape, dtype: dtype}
 			err = ip.process1D(item, g.kernel)
 		case []map[int64]float64:
 			ip := InputProcessor[map[int64]float64]{index: index, shape: shape, dtype: dtype}

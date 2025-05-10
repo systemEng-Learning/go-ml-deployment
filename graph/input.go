@@ -10,7 +10,7 @@ import (
 )
 
 type Number interface {
-	int32 | int64 | int | float32 | float64 |  map[int64]float32 | map[string]float32 | map[string]int64 | map[int64][]byte | map[int64]float64 | map[string]float64
+	int32 | int64 | int | float32 | float64 | map[int64]float32 | map[string]float32 | map[string]int64 | map[int64][]byte | map[int64]float64 | map[string]float64
 }
 
 type InputProcessor[T Number] struct {
@@ -73,7 +73,7 @@ func (ip *InputProcessor[T]) process1D(v []T, kernel *kernel.Kernel) error {
 		return fmt.Errorf("unsupported datatype: %s", ip.dtype)
 	}
 	shape := slices.Clone(ip.shape)
-	
+
 	switch len(shape) {
 	case 1:
 		if shape[0] == -1 {

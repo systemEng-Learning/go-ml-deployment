@@ -9,10 +9,10 @@ import (
 )
 
 type DictVectorizer struct {
-	input int
-	outputs []int
+	input             int
+	outputs           []int
 	string_vocabulary [][]byte
-	int64_vocabulary []int64
+	int64_vocabulary  []int64
 }
 
 func (d *DictVectorizer) Init(k *kernel.Kernel, node *ir.NodeProto) error {
@@ -50,7 +50,7 @@ func (d *DictVectorizer) Compute(k *kernel.Kernel) error {
 	}
 	input := data.Tensor
 	if input.Shape[0] > 1 {
-		if d.int64_vocabulary == nil  && d.string_vocabulary == nil {
+		if d.int64_vocabulary == nil && d.string_vocabulary == nil {
 			return fmt.Errorf("int64_vocabulary or string_vocabulary must be provided.")
 		}
 		dictLabels := make(map[interface{}]int)
@@ -73,7 +73,7 @@ func (d *DictVectorizer) Compute(k *kernel.Kernel) error {
 		rowsList := []int{}
 		colsList := []int{}
 		switch input.DType {
-		case tensor.IntMap:	
+		case tensor.IntMap:
 			dtype = tensor.Float
 			for i, v := range input.IntMap {
 				for k, v1 := range v {
@@ -169,11 +169,11 @@ func (d *DictVectorizer) Compute(k *kernel.Kernel) error {
 			}
 		}
 	} else if input.Shape[0] == 1 {
-		if d.int64_vocabulary == nil  && d.string_vocabulary == nil {
+		if d.int64_vocabulary == nil && d.string_vocabulary == nil {
 			return fmt.Errorf("int64_vocabulary or string_vocabulary must be provided.")
 		}
 		if d.int64_vocabulary != nil {
-			for i, v:= range d.int64_vocabulary {
+			for i, v := range d.int64_vocabulary {
 				switch input.DType {
 				case tensor.IntMap:
 					if _, ok := input.IntMap[0][v]; !ok {
@@ -207,7 +207,7 @@ func (d *DictVectorizer) Compute(k *kernel.Kernel) error {
 				}
 			}
 		} else if d.string_vocabulary != nil {
-			for i, v:= range d.string_vocabulary {
+			for i, v := range d.string_vocabulary {
 				vstr := string(v)
 				switch input.DType {
 				case tensor.StringMap:
@@ -242,8 +242,8 @@ func (d *DictVectorizer) Compute(k *kernel.Kernel) error {
 					return fmt.Errorf("input type not supported")
 				}
 			}
-		 }
-		
+		}
+
 	} else {
 		return fmt.Errorf("input shape not supported")
 	}

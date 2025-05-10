@@ -67,9 +67,9 @@ func (g *Graph) setInputsTensor() error {
 		case *ir.TypeProto_MapType:
 			m := v.MapType
 			elemTypeStr := ir.TensorProto_DataType_name[m.KeyType]
-			value :=m.GetValueType().GetValue()
+			value := m.GetValueType().GetValue()
 			t := value.(*ir.TypeProto_TensorType)
-			
+
 			tensorType := ir.TensorProto_DataType_name[t.TensorType.ElemType]
 			tempdytpe := elemTypeStr + tensorType
 			var dtype tensors.DataType
@@ -95,7 +95,7 @@ func (g *Graph) setInputsTensor() error {
 			g.dtypes[i] = dtype
 
 		}
-		
+
 	}
 	return nil
 }

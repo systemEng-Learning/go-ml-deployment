@@ -24,21 +24,20 @@ const (
 	IntStringMap
 	IntDoubleMap
 	StringDoubleMap
-
 )
 
 var dataTypeMap = map[DataType]string{
-	Undefined: "undefined",
-	Float:     "float",
-	Int32:     "int32",
-	Int64:     "int64",
-	Double:    "double",
-	StringMap: "stringmap",
-	IntMap:    "intmap",
-	String:    "string",
-	StringIntMap:  "stringintmap",
-	IntStringMap:  "intstringmap",
-	IntDoubleMap:  "intdoublemap",
+	Undefined:       "undefined",
+	Float:           "float",
+	Int32:           "int32",
+	Int64:           "int64",
+	Double:          "double",
+	StringMap:       "stringmap",
+	IntMap:          "intmap",
+	String:          "string",
+	StringIntMap:    "stringintmap",
+	IntStringMap:    "intstringmap",
+	IntDoubleMap:    "intdoublemap",
 	StringDoubleMap: "stringdoublemap",
 }
 
@@ -47,18 +46,18 @@ func (dt DataType) String() string {
 }
 
 type Tensor struct {
-	Shape      []int
-	DType      DataType
-	FloatData  []float32
-	Int32Data  []int32
-	Int64Data  []int64
-	DoubleData []float64
-	StringData [][]byte
-	IntMap     []map[int64]float32
-	StringMap  []map[string]float32
-	StringIntMap  []map[string]int64
-	IntStringMap  []map[int64][]byte
-	IntDoubleMap  []map[int64]float64
+	Shape           []int
+	DType           DataType
+	FloatData       []float32
+	Int32Data       []int32
+	Int64Data       []int64
+	DoubleData      []float64
+	StringData      [][]byte
+	IntMap          []map[int64]float32
+	StringMap       []map[string]float32
+	StringIntMap    []map[string]int64
+	IntStringMap    []map[int64][]byte
+	IntDoubleMap    []map[int64]float64
 	StringDoubleMap []map[string]float64
 }
 

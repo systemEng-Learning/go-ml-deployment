@@ -41,7 +41,7 @@ type TreeEnsembleAttributes struct {
 	target_ids                      []int64
 	target_weights                  *tensor.Tensor
 	target_weights_as_tensor        *tensor.Tensor
-	n_targets                        int64
+	n_targets                       int64
 	aggregate_function              string
 }
 
@@ -280,10 +280,10 @@ func (t *TreeEnsemble) LeaveIndexTrees(X *tensor.Tensor) *tensor.Tensor {
 			cols = len(leaves)
 		}
 		cols = len(leaves)
-		
+
 		outputs = append(outputs, leaves...)
 	}
-	
+
 	tensor_output := &tensor.Tensor{
 		Shape:     []int{nSamples, cols},
 		DType:     tensor.Int64,

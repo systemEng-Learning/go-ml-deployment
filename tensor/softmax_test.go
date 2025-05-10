@@ -9,10 +9,10 @@ import (
 
 func TestSoftmaxInPlace(t *testing.T) {
 	tests := []struct {
-		name      string
-		tensor    *Tensor
-		wantErr   error
-		wantData  interface{}
+		name     string
+		tensor   *Tensor
+		wantErr  error
+		wantData interface{}
 	}{
 		{
 			name: "Valid Float Tensor",
@@ -90,10 +90,10 @@ func TestSoftmaxInPlace(t *testing.T) {
 
 func TestSoftmaxZeroInPlace(t *testing.T) {
 	tests := []struct {
-		name      string
-		tensor    *Tensor
-		wantErr   error
-		wantData  interface{}
+		name     string
+		tensor   *Tensor
+		wantErr  error
+		wantData interface{}
 	}{
 		{
 			name: "Valid Float Tensor",
@@ -151,7 +151,7 @@ func TestSoftmaxZeroInPlace(t *testing.T) {
 				DType:     Float,
 				FloatData: []float32{0.0, 0.0, 0.0},
 			},
-			wantErr: nil,
+			wantErr:  nil,
 			wantData: []float32{0.5, 0.5, 0.5},
 		},
 		{
@@ -161,7 +161,7 @@ func TestSoftmaxZeroInPlace(t *testing.T) {
 				DType:      Double,
 				DoubleData: []float64{0.0, 0.0, 0.0},
 			},
-			wantErr: nil,
+			wantErr:  nil,
 			wantData: []float64{0.5, 0.5, 0.5},
 		},
 	}

@@ -41,3 +41,30 @@ func TestScaler(t *testing.T) {
 	scalerTest[int32](t)
 	scalerTest[int64](t)
 }
+
+func TestScalerOffset1(t *testing.T) {
+	sg := Test("Scaler")
+	scale := []float32{3}
+	offset := []float32{4.8}
+	sg.addAttribute("scale", scale)
+	sg.addAttribute("offset", offset)
+
+	input := []float32{0.8, -0.5, 0.0, 0.8, 1.0, 1.0}
+	shape := []int{2, 3}
+	sg.addInput("X", shape, input)
+
+	output := make([][]float32, shape[0])
+	for i := range output {
+		output[i] = make([]float32, shape[1])
+		for j := range shape[1] {
+			output[i][j] = (float32(input[i*shape[1]+j]) - offset[0]) * scale[0]
+		}
+	}
+	sg.addOutput("Y", output)
+	sg.errorBound = 0.00001
+	err := sg.Execute(t)
+
+	if err != nil {
+		t.Fatalf("error shouldn't exist: %v", err)
+	}
+}

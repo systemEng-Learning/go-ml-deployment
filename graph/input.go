@@ -10,7 +10,7 @@ import (
 )
 
 type Number interface {
-	int32 | int64 | int | float32 | float64 
+	int32 | int64 | int | float32 | float64
 }
 
 type MapType interface {
@@ -62,10 +62,10 @@ func (ip *InputProcessor[T]) processStatic(v T, kernel *kernel.Kernel) error {
 	return nil
 }
 func assertDtypeEqual(got, want tensor.DataType, msg string) error {
-    if got != want {
-        return fmt.Errorf("assertion failed: dtype %v != %v. %s", got, want, msg)
-    }
-    return nil
+	if got != want {
+		return fmt.Errorf("assertion failed: dtype %v != %v. %s", got, want, msg)
+	}
+	return nil
 }
 
 func (ip *InputProcessorMap[T]) defineShapeStatic(v T) ([]int, error) {
@@ -107,8 +107,6 @@ func (ip *InputProcessorMap[T]) defineShape1D(v []T) ([]int, error) {
 
 	return shape, nil
 }
-
-
 
 func (ip *InputProcessor[T]) process1D(v []T, kernel *kernel.Kernel) error {
 	if ip.dtype == tensor.StringMap || ip.dtype == tensor.IntMap || ip.dtype == tensor.Undefined {
@@ -216,8 +214,6 @@ func (ip *InputProcessor[T]) process2D(v [][]T, kernel *kernel.Kernel) error {
 	}
 	return nil
 }
-
-
 
 func (g *Graph) setInputs(input []any) error {
 	length := len(g.inputs)

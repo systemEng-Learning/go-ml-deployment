@@ -170,9 +170,6 @@ func (g *Graph) initializeNodes() error {
 			d := &ops.DictVectorizer{}
 			err = d.Init(g.kernel, node)
 			g.nodes = append(g.nodes, d)
-			s := &ops.SVMClassifier{}
-			err = s.Init(g.kernel, node)
-			g.nodes = append(g.nodes, s)
 		case "Scaler":
 			s := &ops.Scaler{}
 			err = s.Init(g.kernel, node)

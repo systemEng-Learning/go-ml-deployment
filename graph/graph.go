@@ -126,13 +126,17 @@ func (g *Graph) initializeNodes() error {
 			err = tr.Init(g.kernel, node)
 			g.nodes = append(g.nodes, tr)
 		case "SVMRegressor":
-			tr := &ops.SVMRegressor{}
-			err = tr.Init(g.kernel, node)
-			g.nodes = append(g.nodes, tr)
+			s := &ops.SVMRegressor{}
+			err = s.Init(g.kernel, node)
+			g.nodes = append(g.nodes, s)
 		case "SVMClassifier":
-			tr := &ops.SVMClassifier{}
-			err = tr.Init(g.kernel, node)
-			g.nodes = append(g.nodes, tr)
+			s := &ops.SVMClassifier{}
+			err = s.Init(g.kernel, node)
+			g.nodes = append(g.nodes, s)
+		case "Scaler":
+			s := &ops.Scaler{}
+			err = s.Init(g.kernel, node)
+			g.nodes = append(g.nodes, s)
 		default:
 			return fmt.Errorf("%s operation not supported", node.OpType)
 		}

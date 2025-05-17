@@ -81,6 +81,45 @@ func (sg *SingleNodeGraph) addInput(name string, shape []int, value any) {
 	sg.onnxGraph.Node[0].Input = append(sg.onnxGraph.Node[0].Input, name)
 }
 
+func (sg *SingleNodeGraph) addInputMap(name string, value any) {
+	sg.inputs = append(sg.inputs, value)
+	input := ir.ValueInfoProto{Name: name}
+	tt := ir.TypeProto_MapType{}
+	var keyType, elemType int32
+	switch value.(type) {
+	case []map[int64]float32:
+		keyType = ir.TensorProto_DataType_value["INT64"]
+		elemType = ir.TensorProto_DataType_value["FLOAT"]
+	case []map[int64]float64:
+		keyType = ir.TensorProto_DataType_value["INT64"]
+		elemType = ir.TensorProto_DataType_value["DOUBLE"]
+	case []map[int64][]byte, []map[int64]string:
+		keyType = ir.TensorProto_DataType_value["INT64"]
+		elemType = ir.TensorProto_DataType_value["STRING"]
+	case []map[string]float32:
+		keyType = ir.TensorProto_DataType_value["STRING"]
+		elemType = ir.TensorProto_DataType_value["FLOAT"]
+	case []map[string]float64:
+		keyType = ir.TensorProto_DataType_value["STRING"]
+		elemType = ir.TensorProto_DataType_value["DOUBLE"]
+	case []map[string]int64:
+		keyType = ir.TensorProto_DataType_value["STRING"]
+		elemType = ir.TensorProto_DataType_value["INT64"]
+	}
+
+	tt.MapType = &ir.TypeProto_Map{KeyType: keyType, ValueType: &ir.TypeProto{}}
+	ss := ir.TypeProto_TensorType{}
+	ss.TensorType = &ir.TypeProto_Tensor{Shape: &ir.TensorShapeProto{}, ElemType: elemType}
+	ss.TensorType.Shape.Dim = make([]*ir.TensorShapeProto_Dimension, 0)
+	d := ir.TensorShapeProto_Dimension{Value: &ir.TensorShapeProto_Dimension_DimValue{DimValue: int64(1)}}
+	ss.TensorType.Shape.Dim = append(ss.TensorType.Shape.Dim, &d)
+	tt.MapType.ValueType.Value = &ss
+	input.Type = &ir.TypeProto{}
+	input.Type.Value = &tt
+	sg.onnxGraph.Input = append(sg.onnxGraph.Input, &input)
+	sg.onnxGraph.Node[0].Input = append(sg.onnxGraph.Node[0].Input, name)
+}
+
 func (sg *SingleNodeGraph) setInput(index int, value any) {
 	sg.inputs[index] = value
 }

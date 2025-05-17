@@ -152,6 +152,7 @@ func (d *DictVectorizer) Compute(k *kernel.Kernel) error {
 		if err != nil {
 			return err
 		}
+		
 		numCols := len(dictLabels)
 		for i, v := range valuesList {
 			r := rowsList[i]
@@ -173,74 +174,100 @@ func (d *DictVectorizer) Compute(k *kernel.Kernel) error {
 			return fmt.Errorf("int64_vocabulary or string_vocabulary must be provided.")
 		}
 		if d.int64_vocabulary != nil {
-			for i, v := range d.int64_vocabulary {
-				switch input.DType {
-				case tensor.IntMap:
-					if _, ok := input.IntMap[0][v]; !ok {
-						return fmt.Errorf("key %v not found in vocabulary", v)
-					}
-					res, err := k.Output(d.outputs[0], []int{1, len(d.int64_vocabulary)}, tensor.Float)
-					if err != nil {
-						return err
-					}
-					res.FloatData[i] = input.IntMap[0][v]
-				case tensor.IntStringMap:
-					if _, ok := input.IntStringMap[0][v]; !ok {
-						return fmt.Errorf("key %v not found in vocabulary", v)
-					}
-					res, err := k.Output(d.outputs[0], []int{1, len(d.int64_vocabulary)}, tensor.String)
-					if err != nil {
-						return err
-					}
-					res.StringData[i] = input.IntStringMap[0][v]
-				case tensor.IntDoubleMap:
-					if _, ok := input.IntDoubleMap[0][v]; !ok {
-						return fmt.Errorf("key %v not found in vocabulary", v)
-					}
-					res, err := k.Output(d.outputs[0], []int{1, len(d.int64_vocabulary)}, tensor.Double)
-					if err != nil {
-						return err
-					}
-					res.DoubleData[i] = input.IntDoubleMap[0][v]
-				default:
-					return fmt.Errorf("input type not supported")
-				}
-			}
-		} else if d.string_vocabulary != nil {
-			for i, v := range d.string_vocabulary {
-				vstr := string(v)
-				switch input.DType {
-				case tensor.StringMap:
-					if _, ok := input.StringMap[0][vstr]; !ok {
-						return fmt.Errorf("key %v not found in vocabulary", vstr)
-					}
-					res, err := k.Output(d.outputs[0], []int{1, len(d.string_vocabulary)}, tensor.Float)
-					if err != nil {
-						return err
-					}
-					res.FloatData[i] = input.StringMap[0][vstr]
-				case tensor.StringDoubleMap:
-					if _, ok := input.StringDoubleMap[0][vstr]; !ok {
-						return fmt.Errorf("key %v not found in vocabulary", vstr)
-					}
-					res, err := k.Output(d.outputs[0], []int{1, len(d.string_vocabulary)}, tensor.Double)
-					if err != nil {
-						return err
-					}
-					res.DoubleData[i] = input.StringDoubleMap[0][vstr]
-				case tensor.StringIntMap:
-					if _, ok := input.StringIntMap[0][vstr]; !ok {
-						return fmt.Errorf("key %v not found in vocabulary", vstr)
-					}
-					res, err := k.Output(d.outputs[0], []int{1, len(d.string_vocabulary)}, tensor.Int64)
-					if err != nil {
-						return err
+			var res *tensor.Tensor
+			var err error
 
-					}
-					res.Int64Data[i] = input.StringIntMap[0][vstr]
-				default:
-					return fmt.Errorf("input type not supported")
+			switch input.DType {
+			case tensor.IntMap:
+				res, err = k.Output(d.outputs[0], []int{ len(d.int64_vocabulary)}, tensor.Float)
+				if err != nil {
+					return err
 				}
+				for i, v := range d.int64_vocabulary {
+					if _, ok := input.IntMap[0][v]; !ok {
+						res.FloatData[i] = 0
+					} else {
+						res.FloatData[i] = input.IntMap[0][v]
+					}
+				}
+			case tensor.IntStringMap:
+				res, err = k.Output(d.outputs[0], []int{ len(d.int64_vocabulary)}, tensor.String)
+				if err != nil {
+					return err
+				}
+				for i, v := range d.int64_vocabulary {
+					if _, ok := input.IntStringMap[0][v]; !ok {
+						res.StringData[i] = []byte("")
+					} else {
+						res.StringData[i] = input.IntStringMap[0][v]
+						
+					}
+				}
+			case tensor.IntDoubleMap:
+				res, err = k.Output(d.outputs[0], []int{ len(d.int64_vocabulary)}, tensor.Double)
+				if err != nil {
+					return err
+				}
+				for i, v := range d.int64_vocabulary {
+					if _, ok := input.IntDoubleMap[0][v]; !ok {
+						res.DoubleData[i] = 0
+					} else {
+						res.DoubleData[i] = input.IntDoubleMap[0][v]
+					}
+				}
+			default:
+				return fmt.Errorf("input type not supported")
+			}
+
+		} else if d.string_vocabulary != nil {
+			var res *tensor.Tensor
+			var err error
+
+			switch input.DType {
+			case tensor.StringMap:
+				res, err = k.Output(d.outputs[0], []int{1, len(d.string_vocabulary)}, tensor.Float)
+				if err != nil {
+					return err
+				}
+				for i, v := range d.string_vocabulary {
+					vstr := string(v)
+					if _, ok := input.StringMap[0][vstr]; !ok {
+						res.FloatData[i] = 0
+					} else {
+						res.FloatData[i] = input.StringMap[0][vstr]
+					}
+				}
+
+			case tensor.StringDoubleMap:
+				res, err = k.Output(d.outputs[0], []int{1, len(d.string_vocabulary)}, tensor.Double)
+				if err != nil {
+					return err
+				}
+				for i, v := range d.string_vocabulary {
+					vstr := string(v)
+					if _, ok := input.StringDoubleMap[0][vstr]; !ok {
+						res.DoubleData[i] = 0
+					} else {
+						res.DoubleData[i] = input.StringDoubleMap[0][vstr]
+					}
+				}
+
+			case tensor.StringIntMap:
+				res, err = k.Output(d.outputs[0], []int{len(d.string_vocabulary)}, tensor.Int64)
+				if err != nil {
+					return err
+				}
+				for i, v := range d.string_vocabulary {
+					vstr := string(v)
+					if _, ok := input.StringIntMap[0][vstr]; !ok {
+						res.Int64Data[i] = 0
+					} else {
+						res.Int64Data[i] = input.StringIntMap[0][vstr]
+					}
+				}
+
+			default:
+				return fmt.Errorf("input type not supported")
 			}
 		}
 

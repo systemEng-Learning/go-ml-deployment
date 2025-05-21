@@ -13,7 +13,17 @@ type Number interface {
 	int32 | int64 | int | float32 | float64
 }
 
+type MapType interface {
+	map[int64]float32 | map[string]float32 | map[string]int64 | map[int64][]byte | map[int64]float64 | map[string]float64
+}
+
 type InputProcessor[T Number] struct {
+	index int
+	shape []int
+	dtype tensor.DataType
+}
+
+type InputProcessorMap[T MapType] struct {
 	index int
 	shape []int
 	dtype tensor.DataType
@@ -50,6 +60,36 @@ func (ip *InputProcessor[T]) processStatic(v T, kernel *kernel.Kernel) error {
 		t.Int64Data[0] = int64(v)
 	}
 	return nil
+}
+func assertDtypeEqual(got, want tensor.DataType, msg string) error {
+	if got != want {
+		return fmt.Errorf("assertion failed: dtype %v != %v. %s", got, want, msg)
+	}
+	return nil
+}
+
+func (ip *InputProcessorMap[T]) defineShape1D(v []T) ([]int, error) {
+	shape := slices.Clone(ip.shape)
+
+	switch len(shape) {
+	case 1:
+		if shape[0] == -1 {
+			shape[0] = len(v) // Automatically fit
+		} else if len(v) != shape[0] {
+			return nil, fmt.Errorf("data of length %d cannot fit expected input of length %d", len(v), shape[0])
+		}
+	case 2:
+		if shape[0] == -1 {
+			if len(v)%shape[1] != 0 {
+				return nil, fmt.Errorf("data of length %d cannot be reshaped into %v", len(v), shape)
+			}
+			shape[0] = len(v) / shape[1] // Set row count
+		} else if len(v) != shape[0]*shape[1] {
+			return nil, fmt.Errorf("data of length %d cannot be reshaped into %v", len(v), shape)
+		}
+	}
+
+	return shape, nil
 }
 
 func (ip *InputProcessor[T]) process1D(v []T, kernel *kernel.Kernel) error {
@@ -200,6 +240,96 @@ func (g *Graph) setInputs(input []any) error {
 		case []float64:
 			ip := InputProcessor[float64]{index: index, shape: shape, dtype: dtype}
 			err = ip.process1D(item, g.kernel)
+		case []map[string]float32:
+			if err := assertDtypeEqual(dtype, tensor.StringMap, ""); err != nil {
+				return err
+			}
+			ip := InputProcessorMap[map[string]float32]{index: index, shape: shape, dtype: dtype}
+			refineShape, err := ip.defineShape1D(item)
+			if err != nil {
+				return err
+			}
+
+			t, err := g.kernel.Output(ip.index, refineShape, ip.dtype)
+			if err != nil {
+				return err
+			}
+			t.StringMap = item
+		case []map[int64]float32:
+			if err := assertDtypeEqual(dtype, tensor.IntMap, ""); err != nil {
+				return err
+			}
+			ip := InputProcessorMap[map[int64]float32]{index: index, shape: shape, dtype: dtype}
+			refineShape, err := ip.defineShape1D(item)
+			if err != nil {
+				return err
+			}
+
+			t, err := g.kernel.Output(ip.index, refineShape, ip.dtype)
+			if err != nil {
+				return err
+			}
+			t.IntMap = item
+		case []map[string]int64:
+			if err := assertDtypeEqual(dtype, tensor.StringIntMap, ""); err != nil {
+				return err
+			}
+			ip := InputProcessorMap[map[string]int64]{index: index, shape: shape, dtype: dtype}
+			refineShape, err := ip.defineShape1D(item)
+			if err != nil {
+				return err
+			}
+
+			t, err := g.kernel.Output(ip.index, refineShape, ip.dtype)
+			if err != nil {
+				return err
+			}
+			t.StringIntMap = item
+		case []map[int64][]byte:
+			if err := assertDtypeEqual(dtype, tensor.IntStringMap, ""); err != nil {
+				return err
+			}
+			ip := InputProcessorMap[map[int64][]byte]{index: index, shape: shape, dtype: dtype}
+			refineShape, err := ip.defineShape1D(item)
+			if err != nil {
+				return err
+			}
+
+			t, err := g.kernel.Output(ip.index, refineShape, ip.dtype)
+			if err != nil {
+				return err
+			}
+			t.IntStringMap = item
+		case []map[int64]float64:
+			if err := assertDtypeEqual(dtype, tensor.IntDoubleMap, ""); err != nil {
+				return err
+			}
+			ip := InputProcessorMap[map[int64]float64]{index: index, shape: shape, dtype: dtype}
+			refineShape, err := ip.defineShape1D(item)
+			if err != nil {
+				return err
+			}
+
+			t, err := g.kernel.Output(ip.index, refineShape, ip.dtype)
+			if err != nil {
+				return err
+			}
+			t.IntDoubleMap = item
+		case []map[string]float64:
+			if err := assertDtypeEqual(dtype, tensor.StringDoubleMap, ""); err != nil {
+				return err
+			}
+			ip := InputProcessorMap[map[string]float64]{index: index, shape: shape, dtype: dtype}
+			refineShape, err := ip.defineShape1D(item)
+			if err != nil {
+				return err
+			}
+
+			t, err := g.kernel.Output(ip.index, refineShape, ip.dtype)
+			if err != nil {
+				return err
+			}
+			t.StringDoubleMap = item
 		case [][]int32:
 			ip := InputProcessor[int32]{index: index, shape: shape, dtype: dtype}
 			err = ip.process2D(item, g.kernel)

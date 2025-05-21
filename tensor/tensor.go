@@ -20,17 +20,25 @@ const (
 	StringMap
 	IntMap
 	String
+	StringIntMap
+	IntStringMap
+	IntDoubleMap
+	StringDoubleMap
 )
 
 var dataTypeMap = map[DataType]string{
-	Undefined: "undefined",
-	Float:     "float",
-	Int32:     "int32",
-	Int64:     "int64",
-	Double:    "double",
-	StringMap: "stringmap",
-	IntMap:    "intmap",
-	String:    "string",
+	Undefined:       "undefined",
+	Float:           "float",
+	Int32:           "int32",
+	Int64:           "int64",
+	Double:          "double",
+	StringMap:       "stringmap",
+	IntMap:          "intmap",
+	String:          "string",
+	StringIntMap:    "stringintmap",
+	IntStringMap:    "intstringmap",
+	IntDoubleMap:    "intdoublemap",
+	StringDoubleMap: "stringdoublemap",
 }
 
 func (dt DataType) String() string {
@@ -38,15 +46,19 @@ func (dt DataType) String() string {
 }
 
 type Tensor struct {
-	Shape      []int
-	DType      DataType
-	FloatData  []float32
-	Int32Data  []int32
-	Int64Data  []int64
-	DoubleData []float64
-	StringData [][]byte
-	IntMap     []map[int64]float32
-	StringMap  []map[string]float32
+	Shape           []int
+	DType           DataType
+	FloatData       []float32
+	Int32Data       []int32
+	Int64Data       []int64
+	DoubleData      []float64
+	StringData      [][]byte
+	IntMap          []map[int64]float32
+	StringMap       []map[string]float32
+	StringIntMap    []map[string]int64
+	IntStringMap    []map[int64][]byte
+	IntDoubleMap    []map[int64]float64
+	StringDoubleMap []map[string]float64
 }
 
 func (t *Tensor) Clone() (*Tensor, error) {
@@ -66,6 +78,14 @@ func (t *Tensor) Clone() (*Tensor, error) {
 		newTensor.StringMap = slices.Clone(t.StringMap)
 	case String:
 		newTensor.StringData = slices.Clone(t.StringData)
+	case StringIntMap:
+		newTensor.StringIntMap = slices.Clone(t.StringIntMap)
+	case IntStringMap:
+		newTensor.IntStringMap = slices.Clone(t.IntStringMap)
+	case IntDoubleMap:
+		newTensor.IntDoubleMap = slices.Clone(t.IntDoubleMap)
+	case StringDoubleMap:
+		newTensor.StringDoubleMap = slices.Clone(t.StringDoubleMap)
 	default:
 		return nil, fmt.Errorf("tensor copy: unsupported data type %d", t.DType)
 	}
@@ -99,6 +119,14 @@ func CreateEmptyTensor(shape []int, dataType DataType) *Tensor {
 		t.StringMap = make([]map[string]float32, shape[0])
 	case String:
 		t.StringData = make([][]byte, size)
+	case StringIntMap:
+		t.StringIntMap = make([]map[string]int64, shape[0])
+	case IntStringMap:
+		t.IntStringMap = make([]map[int64][]byte, shape[0])
+	case IntDoubleMap:
+		t.IntDoubleMap = make([]map[int64]float64, shape[0])
+	case StringDoubleMap:
+		t.StringDoubleMap = make([]map[string]float64, shape[0])
 	}
 
 	return t
@@ -152,6 +180,14 @@ func (t *Tensor) Clear() {
 		t.StringMap = nil
 	case String:
 		t.StringData = nil
+	case StringIntMap:
+		t.StringIntMap = nil
+	case IntStringMap:
+		t.IntStringMap = nil
+	case IntDoubleMap:
+		t.IntDoubleMap = nil
+	case StringDoubleMap:
+		t.StringDoubleMap = nil
 	}
 }
 
@@ -171,6 +207,14 @@ func (t *Tensor) Capacity() int {
 		return len(t.StringMap)
 	case String:
 		return len(t.StringData)
+	case StringIntMap:
+		return len(t.StringIntMap)
+	case IntStringMap:
+		return len(t.IntStringMap)
+	case IntDoubleMap:
+		return len(t.IntDoubleMap)
+	case StringDoubleMap:
+		return len(t.StringDoubleMap)
 	}
 	return 0
 }
@@ -195,6 +239,14 @@ func (t *Tensor) Alloc() {
 		t.StringMap = make([]map[string]float32, t.Shape[0])
 	case String:
 		t.StringData = make([][]byte, capacity)
+	case StringIntMap:
+		t.StringIntMap = make([]map[string]int64, t.Shape[0])
+	case IntStringMap:
+		t.IntStringMap = make([]map[int64][]byte, t.Shape[0])
+	case IntDoubleMap:
+		t.IntDoubleMap = make([]map[int64]float64, t.Shape[0])
+	case StringDoubleMap:
+		t.StringDoubleMap = make([]map[string]float64, t.Shape[0])
 	}
 }
 
@@ -288,16 +340,24 @@ func (t *Tensor) print1D(s *strings.Builder) {
 			fmt.Fprintf(s, "%v", t.StringMap[i])
 		case String:
 			s.WriteString(string(t.StringData[i]))
+		case StringIntMap:
+			fmt.Fprintf(s, "%v", t.StringIntMap[i])
+		case IntStringMap:
+			fmt.Fprintf(s, "%v", t.IntStringMap[i])
+		case IntDoubleMap:
+			fmt.Fprintf(s, "%v", t.IntDoubleMap[i])
+		case StringDoubleMap:
+			fmt.Fprintf(s, "%v", t.StringDoubleMap[i])
 		}
 		if i < t.Shape[0]-1 {
-			if t.DType == IntMap || t.DType == StringMap {
+			if t.DType == IntMap || t.DType == StringMap || t.DType == StringIntMap || t.DType == IntStringMap || t.DType == IntDoubleMap || t.DType == StringDoubleMap {
 				s.WriteString(",\n")
 			} else {
 				s.WriteString(", ")
 			}
 		}
 	}
-	if t.DType == IntMap || t.DType == StringMap {
+	if t.DType == IntMap || t.DType == StringMap || t.DType == StringIntMap || t.DType == IntStringMap || t.DType == IntDoubleMap || t.DType == StringDoubleMap {
 		s.WriteString("\n]\n")
 	} else {
 		s.WriteString("]\n")

@@ -78,11 +78,22 @@ func (g *Graph) getOutputs() []any {
 				result[index] = op.get2D()
 			}
 		case tensors.String:
-			stringArr := make([]string, tensor.Shape[0])
-			for i := range stringArr {
-				stringArr[i] = string(tensor.StringData[i])
+			if len(tensor.Shape) == 1 {
+				stringArr := make([]string, tensor.Shape[0])
+				for i := range stringArr {
+					stringArr[i] = string(tensor.StringData[i])
+				}
+				result[index] = stringArr
+			} else if len(tensor.Shape) == 2 {
+				stringArr2D := make([][]string, tensor.Shape[0])
+				for i := range stringArr2D {
+					stringArr2D[i] = make([]string, tensor.Shape[1])
+					for j := range stringArr2D[i] {
+						stringArr2D[i][j] = string(tensor.StringData[i*tensor.Shape[1]+j])
+					}
+				}
+				result[index] = stringArr2D
 			}
-			result[index] = stringArr
 		case tensors.IntMap:
 			mapSlice := make([]map[int64]float32, tensor.Shape[0])
 			for i := range mapSlice {

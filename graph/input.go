@@ -68,22 +68,6 @@ func assertDtypeEqual(got, want tensor.DataType, msg string) error {
 	return nil
 }
 
-func (ip *InputProcessorMap[T]) defineShapeStatic(v T) ([]int, error) {
-	shape := slices.Clone(ip.shape)
-	if shape[0] == -1 {
-		shape[0] = 1
-	}
-	capacity := shape[0]
-	if len(shape) > 1 {
-		capacity *= shape[1]
-	}
-
-	if capacity != 1 {
-		return nil, fmt.Errorf("shape mismatch: static object cannot fit into input expected shape %v", ip.shape)
-	}
-	return shape, nil
-}
-
 func (ip *InputProcessorMap[T]) defineShape1D(v []T) ([]int, error) {
 	shape := slices.Clone(ip.shape)
 

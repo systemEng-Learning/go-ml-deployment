@@ -133,6 +133,10 @@ func (g *Graph) initializeNodes() error {
 			tr := &ops.SVMClassifier{}
 			err = tr.Init(g.kernel, node)
 			g.nodes = append(g.nodes, tr)
+		case "Binarizer":
+			b := &ops.Binarizer{}
+			err = b.Init(g.kernel, node)
+			g.nodes = append(g.nodes, b)
 		default:
 			return fmt.Errorf("%s operation not supported", node.OpType)
 		}

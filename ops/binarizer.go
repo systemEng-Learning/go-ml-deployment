@@ -67,7 +67,7 @@ type Number interface {
 // apply threshold on input elements
 func binarize[T Number](in []T, out []T, threshold float32) {
 	for i, v := range in {
-		if float32(v) > threshold {
+		if v > T(threshold) {
 			out[i] = 1
 		} else {
 			out[i] = 0

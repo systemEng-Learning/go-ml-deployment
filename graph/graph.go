@@ -178,6 +178,10 @@ func (g *Graph) initializeNodes() error {
 			f := &ops.FeatureVectorizer{}
 			err = f.Init(g.kernel, node)
 			g.nodes = append(g.nodes, f)
+		case "Binarizer":
+			b := &ops.Binarizer{}
+			err = b.Init(g.kernel, node)
+			g.nodes = append(g.nodes, b)
 		default:
 			return fmt.Errorf("%s operation not supported", node.OpType)
 		}

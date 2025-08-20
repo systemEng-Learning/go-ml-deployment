@@ -33,6 +33,10 @@ func (g *Graph) Init(graphProto *ir.GraphProto) error {
 	if err != nil {
 		return err
 	}
+	err = g.registerInitalizers()
+	if err != nil {
+		return nil
+	}
 	err = g.initializeNodes()
 	if err != nil {
 		return err
@@ -124,6 +128,17 @@ func getShape(shape *ir.TensorShapeProto) ([]int, error) {
 	return result, nil
 }
 
+func (g *Graph) registerInitalizers() error {
+	var err error
+	for _, initializerNode := range g.graph.Initializer {
+		err = g.kernel.AddInitializer(initializerNode)
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
 func (g *Graph) initializeNodes() error {
 	var err error
 	g.nodes = make([]Ops, 0)
@@ -182,6 +197,10 @@ func (g *Graph) initializeNodes() error {
 			b := &ops.Binarizer{}
 			err = b.Init(g.kernel, node)
 			g.nodes = append(g.nodes, b)
+		case "Gather":
+			ga := &ops.Gather{}
+			err = ga.Init(g.kernel, node)
+			g.nodes = append(g.nodes, ga)
 		default:
 			return fmt.Errorf("%s operation not supported", node.OpType)
 		}

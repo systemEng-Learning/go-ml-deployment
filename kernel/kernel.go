@@ -3,6 +3,7 @@ package kernel
 import (
 	"fmt"
 
+	"github.com/systemEng-Learning/go-ml-deployment/ir"
 	tensors "github.com/systemEng-Learning/go-ml-deployment/tensor"
 )
 
@@ -29,14 +30,18 @@ type Data struct {
  * - Once setup is complete, operations can retrieve tensors directly using the index.
  */
 type Kernel struct {
-	tensors   []Data
-	tensorMap map[string]int // map of tensor name to index in tensors slice. Only used temporarily during setup
+	tensors        []Data
+	tensorMap      map[string]int // map of tensor name to index in tensors slice. Only used temporarily during setup
+	initializers   []*tensors.Tensor
+	initializerMap map[string]int
 }
 
 // Initialize kernel and its members
 func (k *Kernel) Init() {
 	k.tensors = make([]Data, 0)
 	k.tensorMap = make(map[string]int)
+	k.initializers = make([]*tensors.Tensor, 0)
+	k.initializerMap = make(map[string]int)
 }
 
 // Register as a reader for a tensor using the name as key. This increments
@@ -136,4 +141,33 @@ func (k *Kernel) Get(index int) *tensors.Tensor {
 		return nil
 	}
 	return k.tensors[index].Tensor
+}
+
+func (k *Kernel) AddInitializer(initializerTensor *ir.TensorProto) error {
+	if initializerTensor.Name == "" {
+		return fmt.Errorf("initializer with empty name isn't allowed")
+	}
+	t, err := tensors.FromTensorProto(initializerTensor)
+
+	if err != nil {
+		return err
+	}
+	k.initializers = append(k.initializers, t)
+	k.initializerMap[initializerTensor.Name] = len(k.initializerMap) - 1
+	return nil
+}
+
+func (k *Kernel) GetInitializerIndex(name string) (int, error) {
+	index, ok := k.initializerMap[name]
+	if !ok {
+		return -1, fmt.Errorf("initializer with name %s does not exist", name)
+	}
+	return index, nil
+}
+
+func (k *Kernel) GetInitializer(index int) (*tensors.Tensor, error) {
+	if index >= len(k.initializers) {
+		return nil, fmt.Errorf("initializer with index %d does not exist", index)
+	}
+	return k.initializers[index], nil
 }

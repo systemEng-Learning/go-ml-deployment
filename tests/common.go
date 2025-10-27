@@ -1,6 +1,7 @@
 package tests
 
 import (
+	"fmt"
 	"log"
 	"math"
 	"reflect"
@@ -19,6 +20,10 @@ type SingleNodeGraph struct {
 	graph         *graph.Graph
 }
 
+type NumericType interface {
+	int32 | int64 | float32 | float64
+}
+
 func Test(nodeName string) *SingleNodeGraph {
 	sg := SingleNodeGraph{}
 	sg.onnxGraph = &ir.GraphProto{}
@@ -31,6 +36,8 @@ func (sg *SingleNodeGraph) addAttribute(name string, value any) {
 	switch item := value.(type) {
 	case int64:
 		attr.I = item
+	case float32:
+		attr.F = item
 	case []byte:
 		attr.S = item
 	case []int64:
@@ -129,6 +136,38 @@ func (sg *SingleNodeGraph) addOutput(name string, value any) {
 	sg.onnxGraph.Output = append(sg.onnxGraph.Output, &output)
 	sg.onnxGraph.Node[0].Output = append(sg.onnxGraph.Node[0].Output, name)
 	sg.expected = append(sg.expected, value)
+}
+
+func (sg *SingleNodeGraph) addInitializer(name string, shape []int64, value any) error {
+	initializer := ir.TensorProto{}
+	initializer.Name = name
+	switch value := value.(type) {
+	case []int32:
+		initializer.DataType = ir.TensorProto_DataType_value["INT32"]
+		initializer.Int32Data = value
+	case []int64:
+		initializer.DataType = ir.TensorProto_DataType_value["INT64"]
+		initializer.Int64Data = value
+	case []float32:
+		initializer.DataType = ir.TensorProto_DataType_value["FLOAT"]
+		initializer.FloatData = value
+	case []float64:
+		initializer.DataType = ir.TensorProto_DataType_value["DOUBLE"]
+		initializer.DoubleData = value
+	case []string:
+		initializer.DataType = ir.TensorProto_DataType_value["STRING"]
+		sarr := value
+		initializer.StringData = make([][]byte, len(sarr))
+		for i := range sarr {
+			initializer.StringData[i] = []byte(sarr[i])
+		}
+	default:
+		return fmt.Errorf("test: unsupported data test")
+	}
+	initializer.Dims = shape
+	sg.onnxGraph.Initializer = append(sg.onnxGraph.Initializer, &initializer)
+	sg.onnxGraph.Node[0].Input = append(sg.onnxGraph.Node[0].Input, name)
+	return nil
 }
 
 func (sg *SingleNodeGraph) InitOnly() error {

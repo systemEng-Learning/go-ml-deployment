@@ -1,13 +1,11 @@
 package tests
 
 import (
-	"fmt"
 	"testing"
 )
 
 func TestFeatureVectorizerBasic(t *testing.T) {
 	fv := Test("FeatureVectorizer")
-	fmt.Println(fv)
 	fv.addAttribute("input_dimensions", []int64{3, 2, 1, 4})
 
 	fv.addInput("X", []int{1, 3}, []int64{1, 2, 3})
@@ -25,7 +23,6 @@ func TestFeatureVectorizerBasic(t *testing.T) {
 // Test inputDimensions mismatch
 func TestFeatureVectorizerMisMatch(t *testing.T) {
 	fv := Test("FeatureVectorizer")
-	fmt.Println(fv)
 	fv.addAttribute("input_dimensions", []int64{2, 3})
 
 	fv.addInput("X", []int{1, 3}, []int64{1, 2, 3})
@@ -40,7 +37,6 @@ func TestFeatureVectorizerMisMatch(t *testing.T) {
 
 func TestFeatureVectorizerBatch(t *testing.T) {
 	fv := Test("FeatureVectorizer")
-	fmt.Println(fv)
 	fv.addAttribute("input_dimensions", []int64{2, 2})
 
 	fv.addInput("X", []int{2, 2}, []float64{1.0, 2.0, 3.0, 4.0})

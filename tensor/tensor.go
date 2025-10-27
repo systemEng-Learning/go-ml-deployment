@@ -220,10 +220,7 @@ func (t *Tensor) Capacity() int {
 }
 
 func (t *Tensor) Alloc() {
-	capacity := t.Shape[0]
-	if len(t.Shape) > 1 {
-		capacity *= t.Shape[1]
-	}
+	capacity := t.Size()
 	switch t.DType {
 	case Float:
 		t.FloatData = make([]float32, capacity)
@@ -266,11 +263,7 @@ func (t *Tensor) IsEmpty() bool {
 	if len(t.Shape) == 0 {
 		return true
 	}
-	size := 1
-	for i := range t.Shape {
-		size *= t.Shape[i]
-	}
-	return size == 0
+	return t.Size() == 0
 }
 
 func (t *Tensor) rawData() any {
@@ -300,7 +293,8 @@ func (t *Tensor) String() string {
 	if len(t.Shape) == 1 {
 		t.print1D(&s)
 	} else {
-		t.print2D(&s)
+		t.printRecursive(&s, 0, 0)
+		s.WriteString("\n")
 	}
 
 	// Print shape
@@ -316,6 +310,48 @@ func (t *Tensor) String() string {
 	s.WriteString("]\nDatatype: ")
 	s.WriteString(t.DType.String())
 	return s.String()
+}
+
+func (t *Tensor) printRecursive(sb *strings.Builder, dim int, offset int) {
+	if t.DType == IntMap || t.DType == StringMap {
+		return
+	}
+	n := t.Shape[dim]
+	stride := 1
+	for _, s := range t.Shape[dim+1:] {
+		stride *= s
+	}
+
+	sb.WriteString("[")
+	for i := 0; i < n; i++ {
+		if dim == len(t.Shape)-1 {
+			// Base case: last dimension → print flat slice
+			if i > 0 {
+				sb.WriteByte(' ')
+			}
+			switch t.DType {
+			case Float:
+				fmt.Fprintf(sb, "%f", t.FloatData[offset+i])
+			case Int32:
+				fmt.Fprintf(sb, "%d", t.Int32Data[offset+i])
+			case Int64:
+				fmt.Fprintf(sb, "%d", t.Int64Data[offset+i])
+			case Double:
+				fmt.Fprintf(sb, "%f", t.DoubleData[offset+i])
+			case String:
+				sb.WriteString(string(t.StringData[offset+i]))
+			}
+		} else {
+			if i > 0 {
+				sb.WriteByte('\n')
+				// indent inner levels for readability
+				sb.WriteString(strings.Repeat(" ", dim+1))
+			}
+			// Recurse into next dimension
+			t.printRecursive(sb, dim+1, offset+i*stride)
+		}
+	}
+	sb.WriteString("]")
 }
 
 func (t *Tensor) print1D(s *strings.Builder) {
@@ -364,36 +400,6 @@ func (t *Tensor) print1D(s *strings.Builder) {
 	}
 }
 
-func (t *Tensor) print2D(s *strings.Builder) {
-	if t.DType == IntMap || t.DType == StringMap {
-		return
-	}
-	s.WriteString("[\n")
-	for i := range t.Shape[0] {
-		s.WriteString("\t[")
-		m := t.Shape[1]
-		for j := range m {
-			switch t.DType {
-			case Float:
-				fmt.Fprintf(s, "%f", t.FloatData[i*m+j])
-			case Int32:
-				fmt.Fprintf(s, "%d", t.Int32Data[i*m+j])
-			case Int64:
-				fmt.Fprintf(s, "%d", t.Int64Data[i*m+j])
-			case Double:
-				fmt.Fprintf(s, "%f", t.DoubleData[i*m+j])
-			case String:
-				s.WriteString(string(t.StringData[i*m+j]))
-			}
-			if j < m-1 {
-				s.WriteString(", ")
-			}
-		}
-		s.WriteString("],\n")
-	}
-	s.WriteString("]\n")
-}
-
 func OnnxTypeToDtype(elemType int32) DataType {
 	elemTypeStr := ir.TensorProto_DataType_name[elemType]
 	switch elemTypeStr {
@@ -425,7 +431,6 @@ func FromTensorProto(Tp *ir.TensorProto) (*Tensor, error) {
 	switch elemTypeStr {
 	case "FLOAT":
 		t.FloatData = Tp.FloatData
-		t.Shape = []int{len(t.FloatData)}
 		t.DType = Float
 		return t, nil
 	case "INT32":

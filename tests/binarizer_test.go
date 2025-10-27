@@ -2,11 +2,7 @@ package tests
 
 import "testing"
 
-type BinarizerInput interface {
-	float32 | float64 | int32 | int64
-}
-
-func runBinarizerTest[T BinarizerInput](t *testing.T, input []T, shape []int, threshold float32, expected []T) {
+func runBinarizerTest[T NumericType](t *testing.T, input []T, shape []int, threshold float32, expected []T) {
 	sg := Test("Binarizer")
 	sg.addAttribute("threshold", threshold)
 	sg.addInput("X", shape, input)

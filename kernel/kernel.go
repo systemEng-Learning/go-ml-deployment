@@ -105,8 +105,8 @@ func (k *Kernel) Output(index int, shape []int, dtype tensors.DataType) (*tensor
 		k.tensors[index].Tensor = t
 	} else {
 		count := shape[0]
-		if len(shape) > 1 {
-			count *= shape[1]
+		for i := 1; i < len(shape); i++ {
+			count *= shape[i]
 		}
 		capacity := 0
 		if dtype == t.DType || (t.DType == tensors.Double && dtype == tensors.Float) ||
@@ -153,21 +153,14 @@ func (k *Kernel) AddInitializer(initializerTensor *ir.TensorProto) error {
 		return err
 	}
 	k.initializers = append(k.initializers, t)
-	k.initializerMap[initializerTensor.Name] = len(k.initializerMap) - 1
+	k.initializerMap[initializerTensor.Name] = len(k.initializers) - 1
 	return nil
 }
 
-func (k *Kernel) GetInitializerIndex(name string) (int, error) {
+func (k *Kernel) GetInitializer(name string) (*tensors.Tensor, error) {
 	index, ok := k.initializerMap[name]
 	if !ok {
-		return -1, fmt.Errorf("initializer with name %s does not exist", name)
-	}
-	return index, nil
-}
-
-func (k *Kernel) GetInitializer(index int) (*tensors.Tensor, error) {
-	if index >= len(k.initializers) {
-		return nil, fmt.Errorf("initializer with index %d does not exist", index)
+		return nil, fmt.Errorf("initializer with name %s does not exist", name)
 	}
 	return k.initializers[index], nil
 }

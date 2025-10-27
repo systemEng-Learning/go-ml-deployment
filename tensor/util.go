@@ -1,5 +1,7 @@
 package tensor
 
+import "fmt"
+
 func createOutputTensor(firstDtype, secondDtype DataType, shape []int) *Tensor {
 	result := &Tensor{Shape: shape}
 	if firstDtype == secondDtype {
@@ -21,4 +23,14 @@ func createOutputTensor(firstDtype, secondDtype DataType, shape []int) *Tensor {
 	}
 	result.Alloc()
 	return result
+}
+
+func HandleNegativeAxis(axis, rank int64) (int64, error) {
+	if rank < 0 || axis >= rank || axis < -rank {
+		return 0, fmt.Errorf("axis %d is not in valid range [-%d, %d]", axis, rank, rank-1)
+	}
+	if axis < 0 {
+		return axis + rank, nil
+	}
+	return axis, nil
 }

@@ -4,10 +4,6 @@ import (
 	"testing"
 )
 
-type ValidInputTypes interface {
-	int32 | int64 | float32 | float64
-}
-
 func TestLinearClassifierMultiClass(t *testing.T) {
 	sg := Test("LinearClassifier")
 	coefficients := []float32{-0.22562418, 0.34188559, 0.68346153,
@@ -121,7 +117,7 @@ func TestLinearClassifierBinaryWithLabels(t *testing.T) {
 	sg.Execute(t)
 }
 
-func LinearClassifierMultiClass[T ValidInputTypes](t *testing.T) {
+func LinearClassifierMultiClass[T NumericType](t *testing.T) {
 	sg := Test("LinearClassifier")
 	coefficients := []float32{-0.22562418, 0.34188559, 0.68346153,
 		-0.68051993, -0.1975279, 0.03748541}

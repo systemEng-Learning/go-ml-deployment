@@ -12,7 +12,7 @@ import (
 )
 
 func main() {
-	in, err := os.ReadFile("examples/irislog.onnx")
+	in, err := os.ReadFile("examples/ohe.onnx")
 
 	if err != nil {
 		log.Fatalln("Error reading file:", in)
@@ -22,6 +22,7 @@ func main() {
 	if err := proto.Unmarshal(in, model); err != nil {
 		log.Fatalln("Failed to parse model file:", err)
 	}
+	fmt.Printf("%v+\n", model)
 	printModel(model)
 	graphProto := model.GetGraph()
 	graph := graph.Graph{}

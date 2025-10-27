@@ -24,6 +24,14 @@ var postTransformMap = map[string]postTransform{
 	"SOFTMAX_ZERO": SOFTMAX_ZERO,
 }
 
+type Integer interface {
+	int32 | int64
+}
+
+type AllType interface {
+	int32 | int64 | float32 | float64 | []byte
+}
+
 func update_scores[T tensor.Float32_64](scores []T, shape []int, post_transform postTransform, add_second_class int, have_space bool) {
 	rows := shape[0]
 	cols := shape[1]

@@ -4,11 +4,7 @@ import (
 	"testing"
 )
 
-type scalerInput interface {
-	float32 | float64 | int32 | int64
-}
-
-func scalerTest[T scalerInput](t *testing.T) {
+func scalerTest[T NumericType](t *testing.T) {
 	sg := Test("Scaler")
 	scale := []float32{3, -4, 3.0}
 	offset := []float32{4.8, -0.5, 77.0}

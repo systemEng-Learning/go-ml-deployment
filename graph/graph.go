@@ -201,6 +201,10 @@ func (g *Graph) initializeNodes() error {
 			ga := &ops.Gather{}
 			err = ga.Init(g.kernel, node)
 			g.nodes = append(g.nodes, ga)
+		case "OneHotEncoder":
+			ohe := &ops.OneHotEncoder{}
+			err = ohe.Init(g.kernel, node)
+			g.nodes = append(g.nodes, ohe)
 		default:
 			return fmt.Errorf("%s operation not supported", node.OpType)
 		}

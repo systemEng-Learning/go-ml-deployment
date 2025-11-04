@@ -1,8 +1,12 @@
 package tests
 
-import "testing"
+import (
+	"testing"
 
-func runGatherTest2DOutput[T NumericType](t *testing.T, input [][]T, inputShape []int, indices []int64, indicesShape []int64, expected [][]T, axes ...int64) {
+	"github.com/systemEng-Learning/go-ml-deployment/tensor"
+)
+
+func runGatherTest2DOutput[T tensor.Numeric](t *testing.T, input [][]T, inputShape []int, indices []int64, indicesShape []int64, expected [][]T, axes ...int64) {
 	sg := Test("Gather")
 	sg.addInput("X", inputShape, input)
 	sg.addInitializer("indices", indicesShape, indices)

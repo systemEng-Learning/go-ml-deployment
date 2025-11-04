@@ -20,10 +20,6 @@ type SingleNodeGraph struct {
 	graph         *graph.Graph
 }
 
-type NumericType interface {
-	int32 | int64 | float32 | float64
-}
-
 func Test(nodeName string) *SingleNodeGraph {
 	sg := SingleNodeGraph{}
 	sg.onnxGraph = &ir.GraphProto{}

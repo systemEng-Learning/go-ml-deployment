@@ -5,10 +5,6 @@ import (
 	"fmt"
 )
 
-type Numeric interface {
-	int32 | int64 | float32 | float64
-}
-
 type addKey struct {
 	from1, from2, out DataType
 }

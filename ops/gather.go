@@ -82,39 +82,38 @@ func (ga *Gather) Compute(k *kernel.Kernel) error {
 	switch input.DType {
 	case tensor.Int32:
 		if ga.indices.DType == tensor.Int32 {
-			gather(ga.indices.Int32Data, input.Int32Data, output.Int32Data, block, M, N, data_batch, gathered_batch, input_shape, axis)
+			err = gather(ga.indices.Int32Data, input.Int32Data, output.Int32Data, block, M, N, data_batch, gathered_batch, input_shape, axis)
 		} else {
-			gather(ga.indices.Int64Data, input.Int32Data, output.Int32Data, block, M, N, data_batch, gathered_batch, input_shape, axis)
+			err = gather(ga.indices.Int64Data, input.Int32Data, output.Int32Data, block, M, N, data_batch, gathered_batch, input_shape, axis)
 		}
 	case tensor.Int64:
 		if ga.indices.DType == tensor.Int32 {
-			gather(ga.indices.Int32Data, input.Int64Data, output.Int64Data, block, M, N, data_batch, gathered_batch, input_shape, axis)
+			err = gather(ga.indices.Int32Data, input.Int64Data, output.Int64Data, block, M, N, data_batch, gathered_batch, input_shape, axis)
 		} else {
-			gather(ga.indices.Int64Data, input.Int64Data, output.Int64Data, block, M, N, data_batch, gathered_batch, input_shape, axis)
+			err = gather(ga.indices.Int64Data, input.Int64Data, output.Int64Data, block, M, N, data_batch, gathered_batch, input_shape, axis)
 		}
 	case tensor.Float:
 		if ga.indices.DType == tensor.Int32 {
-			gather(ga.indices.Int32Data, input.FloatData, output.FloatData, block, M, N, data_batch, gathered_batch, input_shape, axis)
+			err = gather(ga.indices.Int32Data, input.FloatData, output.FloatData, block, M, N, data_batch, gathered_batch, input_shape, axis)
 		} else {
-			gather(ga.indices.Int64Data, input.FloatData, output.FloatData, block, M, N, data_batch, gathered_batch, input_shape, axis)
+			err = gather(ga.indices.Int64Data, input.FloatData, output.FloatData, block, M, N, data_batch, gathered_batch, input_shape, axis)
 		}
 	case tensor.Double:
 		if ga.indices.DType == tensor.Int32 {
-			gather(ga.indices.Int32Data, input.DoubleData, output.DoubleData, block, M, N, data_batch, gathered_batch, input_shape, axis)
+			err = gather(ga.indices.Int32Data, input.DoubleData, output.DoubleData, block, M, N, data_batch, gathered_batch, input_shape, axis)
 		} else {
-			gather(ga.indices.Int64Data, input.DoubleData, output.DoubleData, block, M, N, data_batch, gathered_batch, input_shape, axis)
+			err = gather(ga.indices.Int64Data, input.DoubleData, output.DoubleData, block, M, N, data_batch, gathered_batch, input_shape, axis)
 		}
 	case tensor.String:
 		if ga.indices.DType == tensor.Int32 {
-			gather(ga.indices.Int32Data, input.StringData, output.StringData, block, M, N, data_batch, gathered_batch, input_shape, axis)
+			err = gather(ga.indices.Int32Data, input.StringData, output.StringData, block, M, N, data_batch, gathered_batch, input_shape, axis)
 		} else {
-			gather(ga.indices.Int64Data, input.StringData, output.StringData, block, M, N, data_batch, gathered_batch, input_shape, axis)
+			err = gather(ga.indices.Int64Data, input.StringData, output.StringData, block, M, N, data_batch, gathered_batch, input_shape, axis)
 		}
 	default:
 		return fmt.Errorf("gather: invalid tensor data type")
 	}
-
-	return nil
+	return err
 }
 
 func gather[T Integer, U AllType](indices []T, src []U, dst []U, block int64, M int64, N int64, data_batch int64, gathered_batch int64, input_shape []int, axis int64) error {

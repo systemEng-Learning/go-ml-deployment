@@ -2,6 +2,8 @@ package tests
 
 import (
 	"testing"
+
+	"github.com/systemEng-Learning/go-ml-deployment/tensor"
 )
 
 func TestLinearClassifierMultiClass(t *testing.T) {
@@ -117,7 +119,7 @@ func TestLinearClassifierBinaryWithLabels(t *testing.T) {
 	sg.Execute(t)
 }
 
-func LinearClassifierMultiClass[T NumericType](t *testing.T) {
+func LinearClassifierMultiClass[T tensor.Numeric](t *testing.T) {
 	sg := Test("LinearClassifier")
 	coefficients := []float32{-0.22562418, 0.34188559, 0.68346153,
 		-0.68051993, -0.1975279, 0.03748541}

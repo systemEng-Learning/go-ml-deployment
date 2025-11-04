@@ -61,6 +61,10 @@ type Tensor struct {
 	StringDoubleMap []map[string]float64
 }
 
+type Numeric interface {
+	int32 | int64 | float32 | float64
+}
+
 func (t *Tensor) Clone() (*Tensor, error) {
 	newTensor := Tensor{}
 	switch t.DType {
@@ -244,6 +248,33 @@ func (t *Tensor) Alloc() {
 		t.IntDoubleMap = make([]map[int64]float64, t.Shape[0])
 	case StringDoubleMap:
 		t.StringDoubleMap = make([]map[string]float64, t.Shape[0])
+	}
+}
+
+func (t *Tensor) Zero() {
+	switch t.DType {
+	case Float:
+		clear(t.FloatData)
+	case Int32:
+		clear(t.Int32Data)
+	case Int64:
+		clear(t.Int64Data)
+	case Double:
+		clear(t.DoubleData)
+	case IntMap:
+		clear(t.IntMap)
+	case StringMap:
+		clear(t.StringMap)
+	case String:
+		clear(t.StringData)
+	case StringIntMap:
+		clear(t.StringIntMap)
+	case IntStringMap:
+		clear(t.IntStringMap)
+	case IntDoubleMap:
+		clear(t.IntDoubleMap)
+	case StringDoubleMap:
+		clear(t.StringDoubleMap)
 	}
 }
 

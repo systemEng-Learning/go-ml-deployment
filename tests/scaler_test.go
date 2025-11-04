@@ -2,9 +2,11 @@ package tests
 
 import (
 	"testing"
+
+	"github.com/systemEng-Learning/go-ml-deployment/tensor"
 )
 
-func scalerTest[T NumericType](t *testing.T) {
+func scalerTest[T tensor.Numeric](t *testing.T) {
 	sg := Test("Scaler")
 	scale := []float32{3, -4, 3.0}
 	offset := []float32{4.8, -0.5, 77.0}

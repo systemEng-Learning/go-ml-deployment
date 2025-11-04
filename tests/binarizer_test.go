@@ -1,8 +1,12 @@
 package tests
 
-import "testing"
+import (
+	"testing"
 
-func runBinarizerTest[T NumericType](t *testing.T, input []T, shape []int, threshold float32, expected []T) {
+	"github.com/systemEng-Learning/go-ml-deployment/tensor"
+)
+
+func runBinarizerTest[T tensor.Numeric](t *testing.T, input []T, shape []int, threshold float32, expected []T) {
 	sg := Test("Binarizer")
 	sg.addAttribute("threshold", threshold)
 	sg.addInput("X", shape, input)
